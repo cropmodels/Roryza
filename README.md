@@ -2,35 +2,18 @@
 
 R package for the **ORYZA2000** rice crop growth simulation model.
 
-The computational engine is the original ORYZA2000 FORTRAN (FSE 2.1) shipped in the package and run as a subprocess — the same model used for reference validation. The R API mirrors [RWofost](https://github.com/cropmodels/Rwofost): daily weather (`meteor` units), crop/soil/control parameter lists, and either a one-shot `oryza()` call or an `oryza_model()` object with `run()` (C++ path).
+The API mirrors [RWofost](https://github.com/cropmodels/Rwofost): daily weather (`meteor` units), crop/soil/control parameter lists (INI files under `inst/oryza/`), and either a one-shot `oryza()` call or an `oryza_model()` object with `run()`.
 
-## Features
-
-| Mode | Status |
-|------|--------|
-| Potential production | Full (FORTRAN) |
-| Water-limited PADDY | Full (FORTRAN) |
-| Water-limited SAHEL / LOWBAL / SOILPF | Full (FORTRAN) |
-| Water-limited SAWAH | Sources shipped; shipped Windows binary crashes in DRSAWA |
-| Irrigation (SWITIR 0–6) | Full (FORTRAN) |
-| Nitrogen balance (NCROP2 + NSOIL) | Full (FORTRAN) |
-| Numerical parity with ORYZA2000 | Engine **is** ORYZA2000 |
+Reference FORTRAN/FSE sources, rebuild scripts, and numerical tests live under `dev/` (not part of the installed package).
 
 ## Install
 
 ```r
-# Windows: Rtools recommended for the optional C++ path
+# Windows: Rtools; macOS/Linux: a C++ toolchain
 remotes::install_github("cropmodels/Roryza")
 ```
 
-A prebuilt `oryza3` binary is included under `inst/bin/`. To rebuild from `src/fse` sources:
-
-```bash
-# gfortran on PATH (Rtools on Windows)
-Rscript tools/build_oryza3.R
-```
-
-## Example — FORTRAN engine (default)
+## Example
 
 ```r
 library(Roryza)
@@ -39,26 +22,9 @@ crop <- oryza_crop("IR72")
 control <- oryza_control()
 soil <- oryza_soil("paddy")
 control$water_limited <- TRUE
-control$WATBAL <- "PADDY"
-control$SWITIR <- 6
 
-# weather: date, srad (kJ m-2 d-1), tmin, tmax, prec, wind, vapr
-out <- oryza(crop, weather, soil, control)           # engine = "fse"
-```
-
-## Example — nitrogen-limited
-
-```r
-control$nitrogen_limited <- TRUE
-# optional: control$FERTIL <- c(dae1, kgN1, dae2, kgN2, ...)
+# weather: data.frame with date, srad, tmin, tmax, prec, wind, vapr
 out <- oryza(crop, weather, soil, control)
-```
-
-## Direct FSE rundir API
-
-```r
-wd <- oryza_fse_prepare(watbal = "SAWAH", water_limited = TRUE, prdel = 1)
-res <- oryza_fse(wd)          # full RES.DAT table
 ```
 
 ## Weather units
@@ -72,24 +38,25 @@ res <- oryza_fse(wd)          # full RES.DAT table
 | `wind` | m s⁻¹ |
 | `prec` | mm day⁻¹ |
 
-## Validation
+## Tests
 
 ```r
-# From package root after INSTALL:
-Rscript tests/validate_fortran.R
+# C++ API smoke + numeric anchors (always)
+tinytest::test_all()
+
+# Also runs FORTRAN/FSE scenarios when at_home and
+# dev/inst/oryza3.exe exists (rebuild first):
+#   Rscript dev/tools/build_oryza3.R
 ```
 
-This runs potential, all five water balances, and N-limited cases, and checks repeatability to absolute tolerance 0 (identical subprocess outputs).
+## FORTRAN reference (`dev/`)
 
-## Object API (experimental C++ path)
-
-```r
-m <- oryza_model(crop, weather, soil, control)
-out <- run(m)
-# or: oryza(crop, weather, soil, control, engine = "cpp")
+```bash
+Rscript dev/tools/build_oryza3.R
+Rscript dev/tests/test_oryza3_rebuild.R
 ```
 
-The C++ path is incomplete relative to ORYZA2000; use `engine = "fse"` for full physics and FORTRAN equality.
+Binary is written to `dev/inst/oryza3.exe`.
 
 ## References
 
