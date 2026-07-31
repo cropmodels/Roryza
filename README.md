@@ -4,13 +4,10 @@ R package for the **ORYZA2000** rice crop growth simulation model.
 
 Either a one-shot `oryza()` call or an `oryza_model()` object with `run()`.
 
-The API mirrors [RWofost](https://github.com/cropmodels/Rwofost)
-
 ## Install
 
 ```r
-# Windows: Rtools; macOS/Linux: a C++ toolchain
-remotes::install_github("cropmodels/Roryza")
+install.packages('ROryza', repos='https://rspatial.r-universe.dev')
 ```
 
 ## Example
