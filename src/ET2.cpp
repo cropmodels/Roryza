@@ -1,129 +1,94 @@
 //----------------------------------------------------------------------//
 //  SUBROUTINE ET2                                                      //
-//  Used in ORYZA model version 4.0                                     //
-//  Date  : December 2001; modified May 30, 2006                        //
-//  Author: B.A.M. Bouman                                               //
-//                                                                      //
-//  Purpose: Calculates potential evaporation of soil/water layer and   //
-//           potential transpiration of a crop. Calculations done with: //
-//           Penman, Priestley-Taylor or Makkink subroutines.           //
-//           All calculations pertain to the main field, and not to     //
-//           the seedbed.                                              //
-//                                                                      //
-// FORMAL PARAMETERS:  (I=input,O=output,C=control,IN=init,T=time)      //
-// name   type meaning (unit)                                     class //
-// ----   ---- ---------------                                    ----- //
-// ITASK   I4  Task that subroutine should perform (-)               I  //
-// ANGA    R4  Angstrom parameter A                                  I  //
-// ANGB    R4  Angstrom parameter B                                  I  //
-// RDD     R4  Daily shortwave radiation (J.m-2.d-1)                 I  //
-// TMDA    R4  Daily average temperature (degrees C)                 I  //
-// VP      R4  Early morning vapour pressure (kPa)                   I  //
-// WN      R4  Average wind speed (m.s-1)                            I  //
-// LAT     R4  Latitude of site (dec.degr.)                          I  //
-// IDOY    I4  Day number within year of simulation (d)              I  //
-// ETMOD   C*  Name of subroutine to calculate E and T (-)           I  //
-// CROPSTA I4  Crop stage (-)                                        I  //
-// NL      I4  Number of soil layers (-)                             I  //
-// FAOF    R4  Correction factor for E and T (FAO factor) (-)        I  //
-// WL0     R4  Depth f ponded water layer (mm)                       I  //
-// WCLQT   R4  Array of actual soil water contents/layer (m3 m-3)    I  //
-// WCST    R4  Array of water content saturation / layer (m3 m-3)    I  //
-// LAI     R4  Leaf Area Index (-)                                   I  //
-// EVSC    R4  Potential soil evaporation (mm d-1)                   O  //
-// ETD     R4  Reference evapotranspiration (mm d-1)                 O  //
-// TRC     R4  Potential transpiration of crop at given LAI (mm d-1) O  //
-//                                                                      //
-// SUBROUTINES called: SETPMD, SETMKD, SETPTD                           //
-//                                                                      //
-// Files included: -                                                    //
+//  Potential soil evaporation and crop transpiration (Penman/Makkink/PT)
 //----------------------------------------------------------------------//
 
-#include <math.h>
+#include <cmath>
 #include <algorithm>
-#include "model.h"
 #include <string>
+#include "model.h"
 
-// using namespace std;
+namespace {
+	double ETDCUM1 = 0, EVSCCUM1 = 0, TRCCUM1 = 0;
+	double ETDCUM2 = 0, EVSCCUM2 = 0, TRCCUM2 = 0;
+	double ETDCUM3 = 0, EVSCCUM3 = 0, TRCCUM3 = 0;
+}
 
-void ET2_initialize(double ANGA, double ANGB, double RDD, double TMDA, double VP, double WN, double LAT, int IDOY, std::string ETMOD, int CROPSTA,
-        int NL, double FAOF, double WL0, double WCLOT, double WCST, double LAI, double &EVSC, double &ETD, double &TRC){
-    //     Local variables
-    int       ISURF;
-    double          ALB, DT, ETAE, ETRD;
-    double          RF , RFS;
-
-    std::string ESTAB;
-    double ETDCUM1, EVSCCUM1, TRCCUM1;
-    double ETDCUM2, EVSCCUM2, TRCCUM2;
-    double ETDCUM3, EVSCCUM3, TRCCUM3;
-
-
-    ETD = 0.;
-    EVSC = 0.;
-    TRC = 0.;
-
-    ETDCUM1  = 0.;
-    EVSCCUM1 = 0.;
-    TRCCUM1  = 0.;
-
-    ETDCUM2  = 0.;
-    EVSCCUM2 = 0.;
-    TRCCUM2  = 0.;
-
-    ETDCUM3  = 0.;
-    EVSCCUM3 = 0.;
-    TRCCUM3  = 0.;
-
-
-
-
+void ET2_initialize() {
+	ETDCUM1 = EVSCCUM1 = TRCCUM1 = 0.;
+	ETDCUM2 = EVSCCUM2 = TRCCUM2 = 0.;
+	ETDCUM3 = EVSCCUM3 = TRCCUM3 = 0.;
 }
 
 
 void ET2_rate(double ANGA, double ANGB, double RDD, double TMDA, double VP, double WN, double LAT, int IDOY, std::string ETMOD, int CROPSTA,
-              int NL, double FAOF, double WL0, double WCLOT, double WCST, double LAI, double &EVSC, double &ETD, double &TRC){
-    //     Local variables
-    int       ISURF;
-    double          ALB, DT, ETAE, ETRD;
-    double          RF , RFS;
+              double FAOF, double WL0, const std::vector<double> &WCLQT, const std::vector<double> &WCST, double LAI,
+              double &EVSC, double &ETD, double &TRC) {
 
-    std::string ESTAB;
-    double ETDCUM1, EVSCCUM1, TRCCUM1;
-    double ETDCUM2, EVSCCUM2, TRCCUM2;
-    double ETDCUM3, EVSCCUM3, TRCCUM3;
+	int ISURF;
+	double ALB, DT, ETAE = 0, ETRD = 0, RF, RFS;
 
+	if (WL0 > 5.) {
+		ALB = 0.05;
+		RFS = ALB;
+	} else {
+		ALB = 0.25;
+		double wc = WCLQT.empty() ? 0.3 : WCLQT[0];
+		double ws = WCST.empty() ? 0.3 : WCST[0];
+		RFS = ALB * (1. - 0.5 * wc / ws);
+	}
 
+	RF = RFS * exp(-0.5 * LAI) + 0.25 * (1. - exp(-0.5 * LAI));
+
+	if (ETMOD == "PENMAN") {
+		if (CROPSTA < 3) {
+			ISURF = (WL0 > 5.) ? 1 : 2;
+		} else {
+			ISURF = 3;
+		}
+		std::vector<double> setpmd = SETPMD(IDOY, LAT, ISURF, RF, ANGA, ANGB, 0., RDD, TMDA, WN, VP);
+		ETD = setpmd[0];
+		ETRD = setpmd[1];
+		ETAE = setpmd[2];
+		DT = setpmd[3];
+		(void)DT;
+	} else if (ETMOD == "MAKKINK") {
+		ETD = SETMKD(RDD, TMDA);
+		ETRD = 0.75 * ETD;
+		ETAE = ETD - ETRD;
+	} else if (ETMOD == "PRIESTLEY TAYLOR") {
+		ETD = SETPTD(IDOY, LAT, RF, RDD, TMDA);
+		ETRD = 0.75 * ETD;
+		ETAE = ETD - ETRD;
+	} else {
+		ETD = 0.;
+		ETRD = 0.;
+		ETAE = 0.;
+	}
+
+	ETD  = ETD  * FAOF;
+	ETRD = ETRD * FAOF;
+	ETAE = ETAE * FAOF;
+
+	EVSC = exp(-0.5 * LAI) * (ETRD + ETAE);
+	EVSC = std::max(EVSC, 0.);
+	// Bas, June 2006: transpiration also before transplanting
+	TRC = ETRD * (1. - exp(-0.5 * LAI)) + ETAE * std::min(2.0, LAI);
 }
 
 
-void ET2_state(double ANGA, double ANGB, double RDD, double TMDA, double VP, double WN, double LAT, int IDOY, std::string ETMOD, int CROPSTA,
-               int NL, double FAOF, double WL0, double WCLOT, double WCST, double LAI, double &EVSC, double &ETD, double &TRC){
-    //     Local variables
-    int       ISURF;
-    double          ALB, DT, ETAE, ETRD;
-    double          RF , RFS;
-
-    std::string ESTAB;
-    double ETDCUM1, EVSCCUM1, TRCCUM1;
-    double ETDCUM2, EVSCCUM2, TRCCUM2;
-    double ETDCUM3, EVSCCUM3, TRCCUM3;
-
-
-
+void ET2_state(double DELT, int CROPSTA, const std::string &ESTAB, double ETD, double EVSC, double TRC) {
+	ETDCUM1  += ETD * DELT;
+	EVSCCUM1 += EVSC * DELT;
+	TRCCUM1  += TRC * DELT;
+	if (CROPSTA >= 1) {
+		ETDCUM2  += ETD * DELT;
+		EVSCCUM2 += EVSC * DELT;
+		TRCCUM2  += TRC * DELT;
+	}
+	if (ESTAB == "TRANSPLANT" && CROPSTA >= 3) {
+		ETDCUM3  += ETD * DELT;
+		EVSCCUM3 += EVSC * DELT;
+		TRCCUM3  += TRC * DELT;
+	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

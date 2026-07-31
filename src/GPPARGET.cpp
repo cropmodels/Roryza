@@ -27,7 +27,7 @@ void GPPARGET(double xGAI, double xGAID, double xAmaxIn, double xEffIn, double &
     tmpr1 = xAmaxIn;
 
     AmaxCO2 = 49.57/34.26*(1.-exp (-0.208*(cCO2-60.)/49.57));
-    AmaxCO2 = max (0.,AmaxCO2);
+    AmaxCO2 = std::max(0., AmaxCO2);
 
     if (xGAI > 0.01  && cKNF > 0.) {
         SLNI = cNFLV*xGAI*cKNF*exp(-cKNF*xGAID)/(1.-exp(-cKNF*xGAI));

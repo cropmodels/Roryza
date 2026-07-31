@@ -131,6 +131,10 @@ void oryza_model::oryza_rate() {
         crop.ZRT = crop.ZRTI;
         if(control.ESTAB == "TRANSPLANT") crop.LAI = crop.LAPE * crop.NPLSB;
         if(control.ESTAB == "DIRECT-SEED") crop.LAI = crop.LAPE * crop.NPLDS;
+        // Ensure exponential LAI growth has a seed mass even if WLVGI=0
+        if (crop.WLVG <= 0.) crop.WLVG = 0.01;
+        if (crop.WSTS <= 0.) crop.WSTS = 0.01;
+        crop.WST = crop.WSTS + crop.WSTR;
     }
 
     //--------Re-initialize rooting depth at day of transplanting
@@ -155,22 +159,22 @@ void oryza_model::oryza_rate() {
             crop.TMPCOV = 0.;
         }
 
-        //problem
-        crop.TCOR = AFGEN(crop.TMCTB, DOY);
+        if (crop.TMCTB.size() >= 2) {
+            crop.TCOR = AFGEN(crop.TMCTB, DOY);
+        } else {
+            crop.TCOR = 0.;
+        }
         crop.TMAX = atm.TMMX + crop.TCOR + crop.TMPCOV;
         crop.TMIN = atm.TMMN + crop.TCOR;
         crop.TAV = (crop.TMIN + crop.TMAX) / 2.;
         crop.TAVD = (crop.TMAX + crop.TAV) / 2.;
         crop.DTR = crop.RDD;
-        // RJH begin
-        if (crop.TMIN < 5.) TERMINAL = true;
-        // RJH end
 
         //----------Counter for days after emergence
         crop.RDAE = 1.;
         //----------Phenological development
         crop.HU = SUBDD(crop.TMAX, crop.TMIN, crop.TBD, crop.TOD, crop.TMD);
-        crop.NCOLD = SUBCD2(crop.COLDMIN, crop.CROPSTA, crop.TAV);
+        SUBCD2(crop.COLDMIN, crop.CROPSTA, crop.TAV, crop.NCOLD);
 
         std::vector<double> phenol = PHENOL(crop.DVS, crop.DVRJ, crop.DVRI, crop.DVRP, crop.DVRR, crop.HU, crop.DAYL,
                                        crop.MOPP, crop.PPSE, crop.TS, crop.SHCKD, crop.CROPSTA);
@@ -178,193 +182,166 @@ void oryza_model::oryza_rate() {
         crop.TSHCKD = phenol[1];
         //----------Effect of drought stress on development rate
         if (crop.DVS < 1.0) {
-            // BB: REMOVE THIS; IT CAN TAKE MORE THAN 1 YEAR TO COMPLETE A CROP CYCLE////
-            //              DVEW = LESTRS + (DVS*(1.-LESTRS))
             crop.DVEW = 1.;
-        } else{
-            if (crop.DVS >= 1.)  {
-                crop.DVEW = 1.;
-            }
-            
-            crop.DVR = crop.DVR*crop.DVEW;
-            //----------CO2 concentration
-            crop.CO2EFF = (1.-exp(-0.00305*crop.CO2-0.222)) / (1.-exp(-0.00305*crop.CO2REF-0.222));
-            crop.EFF = AFGEN(crop.EFFTB, crop.TAVD)*crop.CO2EFF;
-            //----------Leaf rolling under drought stress (only for photosynthesis)
-            crop.LAIROL = crop.LAI*(0.5*crop.LRSTRS+0.5);
-
-            //--------- Add specific stem area to leaf area
-            crop.SSGA = AFGEN(crop.SSGATB,crop.DVS);
-            crop.SAI  = crop.SSGA*crop.WST;
-            crop.ALAI   = crop.LAIROL+0.5*crop.SAI;
-
-            //----------Intercepted solar radiation
-            crop.KDF   = AFGEN(crop.KDFTB,crop.DVS);
-            crop.REDFT = AFGEN(crop.REDFTT,crop.TAVD);
-            crop.KNF   = AFGEN(crop.KNFTB,crop.DVS);
-
-            //----------Daily gross canopy CO2 assimilation (DTGA)
-            GPPARSET (crop.CO2, crop.KNF, crop.NFLV, crop.REDFT);
-            //----------The value 2 in next argument list: accuracy for Gauss integration over canopy.
-            //          If value=1 => 3-points Gauss over canopy (as in TOTASP); of value = 2 =>
-            //          enhanced accuracy if required as detrmined within the subroutine TRY//
-            SGPCDT(1, IDOY, atm.latitude, crop.DTR, crop.FRPAR, crop.SCP, crop.AMAX, crop.EFF, crop.KDF, crop.ALAI, crop.DAYL, crop.DAYLP,
-                    crop.DTGA, crop.RAPCDT);
-            crop.PARI1 = crop.RAPCDT/1.e6;
-            crop.DPARI = crop.RAPCDT/1.e6;
-            crop.DPAR  = crop.FRPAR*crop.DTR/1.E6;
-
-            //----------Unrolling of ALAI again
-            crop.ALAI  = crop.LAI+0.5*crop.SAI;
-
-            //----------Effect of drought stress on DTGA
-            crop.DTGA  = crop.DTGA*crop.PCEW;
-
-            //----------Relative growth rates of shoots and roots
-            //          Effect of drought stress on shoot-root partitioning
-            //BB: Changed according to SUCROS2
-            crop.FSH = AFGEN(crop.FSHTB,crop.DVS);
-            if (crop.DVS < 1.)  {
-                crop.FSH  = (crop.FSH*crop.CPEW)/NOTNUL((1.+(crop.CPEW-1.)*crop.FSH));
-            }
-            crop.FRT = 1.- crop.FSH;
-
-            //----------Relative growth rates of shoot organs
-            crop.FLV = AFGEN(crop.FLVTB,crop.DVS);
-            crop.FST = AFGEN(crop.FSTTB,crop.DVS);
-            crop.FSO = AFGEN(crop.FSOTB,crop.DVS);
-
-            //----------Check sink limitation based on yesterday's growth rates
-            //          and adapt partitioning stem-storage organ accordingly
-            if (crop.GRAINS)  {
-                if (crop.GGR >= (crop.PWRR-crop.WRR))  {
-            //RJH
-            // WE HAD A CRASH WHEN NOTNUL(GCR*FSH) WAS VERY SMALL
-            // WHILE std::max() WAS ZERO. THIS SHOULD RETURN ZERO BUT RETURNED INFINITY INSTEAD
-                    if ( std::max(0.,(crop.PWRR-crop.WRR)) > 0)  {
-                        crop.FSO = std::max(0.,(crop.PWRR-crop.WRR)/NOTNUL((crop.GCR*crop.FSH)));
-                    } else { ;
-                        crop.FSO = 0;
-                    }
-            // END RJH
-                    crop.FST = 1.-crop.FSO-crop.FLV;
-                }
-            }
-
-            //----------Loss rates of green leaves and stem reserves
-            crop.LLV  = crop.NSLLV*crop.WLVG*AFGEN(crop.DRLVT,crop.DVS);
-            crop.LSTR = INSW(crop.DVS-1.,0.,crop.WSTR/crop.TCLSTR);
-
-            //----------Maintenance requirements
-            crop.TEFF = pow(crop.Q10, ((crop.TAV-crop.TREF)/10.));
-            crop.MNDVS = crop.WLVG/NOTNUL(crop.WLVG+crop.WLVD);
-            crop.RMCR  = (crop.WLVG*crop.MAINLV+crop.WST*crop.MAINST+crop.WSO*crop.MAINSO+crop.WRT*crop.MAINRT)*crop.TEFF*crop.MNDVS;
-
-            //----------Carbohydrate requirement for dry matter production (growth respiration)
-            crop.CRGCR = crop.FSH*(crop.CRGLV*crop.FLV+crop.CRGST*crop.FST*(1.-crop.FSTR)+crop.CRGSTR*crop.FSTR*crop.FST+crop.CRGSO*crop.FSO)+crop.CRGRT*crop.FRT ;
-
-            //----------Gross and net growth rate of crop (GCR, NGCR)
-            crop.GCR   =((crop.DTGA*30./44.)-crop.RMCR+(crop.LSTR*crop.LRSTR*crop.FCSTR*30./12.))/NOTNUL(crop.CRGCR);
-            crop.NGCR  = std::max(0.,crop.GCR-crop.LSTR*crop.LRSTR*crop.FCSTR*30./12.);
-
-            //----------Set transplanting effect
-            if (crop.CROPSTA  ==  3)  {
-                crop.PLTR = crop.NPLH*crop.NH/crop.NPLSB;
-            } else {
-                crop.PLTR = 1.;
-            }
-
-            //----------Growth rates of crop organs at transplanting
-            crop.RWLVG1 = (crop.WLVG*(1.-crop.PLTR))/DELT;
-            crop.GST1   = (crop.WSTS*(1.-crop.PLTR))/DELT;
-            crop.RWSTR1 = (crop.WSTR*(1.-crop.PLTR))/DELT;
-            crop.GRT1   = (crop.WRT *(1.-crop.PLTR))/DELT;
-
-            //----------Growth rates of crop organs
-            crop.GRT    = crop.GCR*crop.FRT-crop.GRT1;
-            crop.GLV    = crop.GCR*crop.FSH*crop.FLV-crop.RWLVG1;
-            crop.RWLVG  = crop.GLV-crop.LLV;
-            crop.GST    = crop.GCR*crop.FSH*crop.FST*(1.-crop.FSTR)-crop.GST1;
-            crop.GSTR   = crop.GCR*crop.FSH*crop.FST*crop.FSTR-crop.RWSTR1;
-            crop.RWSTR  = crop.GSTR-crop.LSTR;
-            crop.GSO    = crop.GCR*crop.FSH*crop.FSO;
-            if (crop.DVS > 0.95)  {
-                crop.GGR = crop.GSO;
-            } else { ;
-                crop.GGR = 0.;
-            }
-
-//            void SUBGRN( double GCR, double CROPSTA, double LRSTRS, double DVS, double SF1, double SF2, double SPGF,
-//                        double TAV, double TMAX, double NSP, double TIME, double &GNSP, double &GNGR, double &SPFERT, bool &GRAINS);
-
-            //----------Growth rate of number of spikelets and grains
-            //problem
-            SUBGRN (crop.GCR,crop.CROPSTA,crop.LRSTRS,crop.DVS,crop.SF2,crop.SF1,crop.SPGF,crop.TAV,crop.TMAX,
-                    crop.NSP, time, crop.GNSP,crop.GNGR,crop.SPFERT,crop.GRAINS);
-
-            //--------- Leaf area growth (after calculation on leaf growth and loss rates//)
-
-            //----------Temperature sum for leaf development
-            crop.HULV = SUBDD(crop.TMAX,crop.TMIN,crop.TBLV,30.,42.);
-
-            //----------Specific leaf area
-            if (crop.SWISLA == "TABLE")  {
-                crop.SLA  = AFGEN(crop.SLATB,crop.DVS);
-            } else {
-                crop.SLA = crop.ASLA + crop.BSLA*exp(crop.CSLA*(crop.DVS-crop.DSLA));
-                crop.SLA = std::min(crop.SLAMAX, crop.SLA);
-            }
-
-            // BB: NEW LAI ROUTINE
-//----------Leaf area index growth
-            SUBLAI3(crop.CROPSTA,crop.RGRLMX,crop.RGRLMN,crop.TSLV,crop.HULV,
-                    crop.SHCKL,crop.LESTRS,crop.RNSTRS,crop.SLA,crop.NH,crop.NPLH,crop.NPLSB,crop.DVS,crop.LAI,
-                    control.ESTAB,crop.RWLVG,crop.DLDR,crop.WLVG,crop.GLAI,crop.RGRL);
-
-//----------Leaf death as caused by drought stress
-            crop.DLDR = 0.;
-            if( crop.LDSTRS == 1. ){
-                crop.DLEAF = false;
-                crop.DLDRT = 0.;
-            }
-            if( crop.LDSTRS < 1. && !crop.DLEAF ){
-                crop.WLVGIT = crop.WLVG;
-                crop.DLEAF  = true;
-                crop.KEEP   = crop.LDSTRS;
-            }
-            if(crop.DLEAF){
-                if (crop.LDSTRS <= crop.KEEP)  {
-                    crop.DLDR  = (crop.WLVGIT/DELT)*(1.-crop.LDSTRS)-crop.DLDRT/DELT;
-                    crop.KEEP  = crop.LDSTRS;
-                    crop.DLDRT = crop.DLDR*DELT+crop.DLDRT;
-                }
-            }
-
-            //----------Growth respiration of the crop (RGCR)
-            crop.CO2RT  = 44./12.*(crop.CRGRT *12./30.-crop.FCRT );
-            crop.CO2LV  = 44./12.*(crop.CRGLV *12./30.-crop.FCLV );
-            crop.CO2ST  = 44./12.*(crop.CRGST *12./30.-crop.FCST );
-            crop.CO2STR = 44./12.*(crop.CRGSTR*12./30.-crop.FCSTR);
-            crop.CO2SO  = 44./12.*(crop.CRGSO *12./30.-crop.FCSO );
-
-            crop.RGCR = (crop.GRT+crop.GRT1)*crop.CO2RT + (crop.GLV+crop.RWLVG1)*crop.CO2LV +
-            (crop.GST+crop.GST1)*crop.CO2ST + crop.GSO*crop.CO2SO+(crop.GSTR+crop.RWSTR1)*crop.CO2STR+
-            (1.-crop.LRSTR)*crop.LSTR*crop.FCSTR*44./12.;
-
-            crop.CTRANS = crop.RWLVG1*crop.FCLV+crop.GST1*crop.FCST+crop.RWSTR1*crop.FCSTR+crop.GRT1*crop.FCRT;
-            crop.RTNASS = ((crop.DTGA*30./44.-crop.RMCR)*44./30.)-crop.RGCR-(crop.CTRANS*44./12.);
-
-            //----------Carbon balance check
-            crop.CKCIN  = (crop.WLVG+crop.WLVD-crop.WLVGI)*crop.FCLV+(crop.WSTS-crop.WSTI)*crop.FCST+crop.WSTR*crop.FCSTR
-                        +(crop.WRT-crop.WRTI)*crop.FCRT+crop.WSO*crop.FCSO;
-            crop.CKCFL  = crop.TNASS*(12./44.);
-            //SUBCBC(<#double CKCIN#>, <#double CKCFL#>, <#double TIME#>, <#double TERMNL#>)
-            
-            SUBCBC(crop.CKCIN,crop.CKCFL, time ,crop.CBCHK, TERMINAL);
-            
-            
-
+        } else if (crop.DVS >= 1.) {
+            crop.DVEW = 1.;
         }
+        crop.DVR = crop.DVR * crop.DVEW;
+
+        //----------CO2 concentration
+        crop.CO2EFF = (1.-exp(-0.00305*crop.CO2-0.222)) / (1.-exp(-0.00305*crop.CO2REF-0.222));
+        crop.EFF = AFGEN(crop.EFFTB, crop.TAVD)*crop.CO2EFF;
+        //----------Leaf rolling under drought stress (only for photosynthesis)
+        crop.LAIROL = crop.LAI*(0.5*crop.LRSTRS+0.5);
+
+        //--------- Add specific stem area to leaf area
+        crop.SSGA = AFGEN(crop.SSGATB,crop.DVS);
+        crop.SAI  = crop.SSGA*crop.WST;
+        crop.ALAI   = crop.LAIROL+0.5*crop.SAI;
+
+        //----------Intercepted solar radiation
+        crop.KDF   = AFGEN(crop.KDFTB,crop.DVS);
+        crop.REDFT = AFGEN(crop.REDFTT,crop.TAVD);
+        crop.KNF   = AFGEN(crop.KNFTB,crop.DVS);
+
+        //----------Daily gross canopy CO2 assimilation (DTGA)
+        GPPARSET (crop.CO2, crop.KNF, crop.NFLV, crop.REDFT);
+        SGPCDT(1, IDOY, atm.latitude, crop.DTR, crop.FRPAR, crop.SCP, crop.AMAX, crop.EFF, crop.KDF, crop.ALAI, crop.DAYL, crop.DAYLP,
+                crop.DTGA, crop.RAPCDT);
+        crop.PARI1 = crop.RAPCDT/1.e6;
+        crop.DPARI = crop.RAPCDT/1.e6;
+        crop.DPAR  = crop.FRPAR*crop.DTR/1.E6;
+
+        //----------Unrolling of ALAI again
+        crop.ALAI  = crop.LAI+0.5*crop.SAI;
+
+        //----------Effect of drought stress on DTGA
+        crop.DTGA  = crop.DTGA*crop.PCEW;
+
+        //----------Relative growth rates of shoots and roots
+        crop.FSH = AFGEN(crop.FSHTB,crop.DVS);
+        if (crop.DVS < 1.)  {
+            crop.FSH  = (crop.FSH*crop.CPEW)/NOTNUL((1.+(crop.CPEW-1.)*crop.FSH));
+        }
+        crop.FRT = 1.- crop.FSH;
+
+        //----------Relative growth rates of shoot organs
+        crop.FLV = AFGEN(crop.FLVTB,crop.DVS);
+        crop.FST = AFGEN(crop.FSTTB,crop.DVS);
+        crop.FSO = AFGEN(crop.FSOTB,crop.DVS);
+
+        //----------Check sink limitation based on yesterday's growth rates
+        if (crop.GRAINS)  {
+            if (crop.GGR >= (crop.PWRR-crop.WRR))  {
+                if ( std::max(0.,(crop.PWRR-crop.WRR)) > 0)  {
+                    crop.FSO = std::max(0.,(crop.PWRR-crop.WRR)/NOTNUL((crop.GCR*crop.FSH)));
+                } else {
+                    crop.FSO = 0;
+                }
+                crop.FST = 1.-crop.FSO-crop.FLV;
+            }
+        }
+
+        //----------Loss rates of green leaves and stem reserves
+        crop.LLV  = crop.NSLLV*crop.WLVG*AFGEN(crop.DRLVT,crop.DVS);
+        crop.LSTR = INSW(crop.DVS-1.,0.,crop.WSTR/crop.TCLSTR);
+
+        //----------Maintenance requirements
+        crop.TEFF = pow(crop.Q10, ((crop.TAV-crop.TREF)/10.));
+        crop.MNDVS = crop.WLVG/NOTNUL(crop.WLVG+crop.WLVD);
+        crop.RMCR  = (crop.WLVG*crop.MAINLV+crop.WST*crop.MAINST+crop.WSO*crop.MAINSO+crop.WRT*crop.MAINRT)*crop.TEFF*crop.MNDVS;
+
+        //----------Carbohydrate requirement for dry matter production (growth respiration)
+        crop.CRGCR = crop.FSH*(crop.CRGLV*crop.FLV+crop.CRGST*crop.FST*(1.-crop.FSTR)+crop.CRGSTR*crop.FSTR*crop.FST+crop.CRGSO*crop.FSO)+crop.CRGRT*crop.FRT ;
+
+        //----------Gross and net growth rate of crop (GCR, NGCR)
+        crop.GCR   =((crop.DTGA*30./44.)-crop.RMCR+(crop.LSTR*crop.LRSTR*crop.FCSTR*30./12.))/NOTNUL(crop.CRGCR);
+        crop.NGCR  = std::max(0.,crop.GCR-crop.LSTR*crop.LRSTR*crop.FCSTR*30./12.);
+
+        //----------Set transplanting effect
+        if (crop.CROPSTA  ==  3)  {
+            crop.PLTR = crop.NPLH*crop.NH/crop.NPLSB;
+        } else {
+            crop.PLTR = 1.;
+        }
+
+        //----------Growth rates of crop organs at transplanting
+        crop.RWLVG1 = (crop.WLVG*(1.-crop.PLTR))/DELT;
+        crop.GST1   = (crop.WSTS*(1.-crop.PLTR))/DELT;
+        crop.RWSTR1 = (crop.WSTR*(1.-crop.PLTR))/DELT;
+        crop.GRT1   = (crop.WRT *(1.-crop.PLTR))/DELT;
+
+        //----------Growth rates of crop organs
+        crop.GRT    = crop.GCR*crop.FRT-crop.GRT1;
+        crop.GLV    = crop.GCR*crop.FSH*crop.FLV-crop.RWLVG1;
+        crop.RWLVG  = crop.GLV-crop.LLV;
+        crop.GST    = crop.GCR*crop.FSH*crop.FST*(1.-crop.FSTR)-crop.GST1;
+        crop.GSTR   = crop.GCR*crop.FSH*crop.FST*crop.FSTR-crop.RWSTR1;
+        crop.RWSTR  = crop.GSTR-crop.LSTR;
+        crop.GSO    = crop.GCR*crop.FSH*crop.FSO;
+        if (crop.DVS > 0.95)  {
+            crop.GGR = crop.GSO;
+        } else {
+            crop.GGR = 0.;
+        }
+
+        //----------Growth rate of number of spikelets and grains
+        SUBGRN (crop.GCR,crop.CROPSTA,crop.LRSTRS,crop.DVS,crop.SF2,crop.SF1,crop.SPGF,crop.TAV,crop.TMAX,
+                crop.NSP, time, crop.GNSP,crop.GNGR,crop.SPFERT,crop.GRAINS);
+
+        //----------Temperature sum for leaf development
+        crop.HULV = SUBDD(crop.TMAX,crop.TMIN,crop.TBLV,30.,42.);
+
+        //----------Specific leaf area
+        if (crop.SWISLA == "TABLE")  {
+            crop.SLA  = AFGEN(crop.SLATB,crop.DVS);
+        } else {
+            crop.SLA = crop.ASLA + crop.BSLA*exp(crop.CSLA*(crop.DVS-crop.DSLA));
+            crop.SLA = std::min(crop.SLAMAX, crop.SLA);
+        }
+
+        SUBLAI3(crop.CROPSTA,crop.RGRLMX,crop.RGRLMN,crop.TSLV,crop.HULV,
+                crop.SHCKL,crop.LESTRS,crop.RNSTRS,crop.SLA,crop.NH,crop.NPLH,crop.NPLSB,crop.DVS,crop.LAI,
+                control.ESTAB,crop.RWLVG,crop.DLDR,crop.WLVG,crop.GLAI,crop.RGRL);
+
+        //----------Leaf death as caused by drought stress
+        crop.DLDR = 0.;
+        if( crop.LDSTRS == 1. ){
+            crop.DLEAF = false;
+            crop.DLDRT = 0.;
+        }
+        if( crop.LDSTRS < 1. && !crop.DLEAF ){
+            crop.WLVGIT = crop.WLVG;
+            crop.DLEAF  = true;
+            crop.KEEP   = crop.LDSTRS;
+        }
+        if(crop.DLEAF){
+            if (crop.LDSTRS <= crop.KEEP)  {
+                crop.DLDR  = (crop.WLVGIT/DELT)*(1.-crop.LDSTRS)-crop.DLDRT/DELT;
+                crop.KEEP  = crop.LDSTRS;
+                crop.DLDRT = crop.DLDR*DELT+crop.DLDRT;
+            }
+        }
+
+        //----------Growth respiration of the crop (RGCR)
+        crop.CO2RT  = 44./12.*(crop.CRGRT *12./30.-crop.FCRT );
+        crop.CO2LV  = 44./12.*(crop.CRGLV *12./30.-crop.FCLV );
+        crop.CO2ST  = 44./12.*(crop.CRGST *12./30.-crop.FCST );
+        crop.CO2STR = 44./12.*(crop.CRGSTR*12./30.-crop.FCSTR);
+        crop.CO2SO  = 44./12.*(crop.CRGSO *12./30.-crop.FCSO );
+
+        crop.RGCR = (crop.GRT+crop.GRT1)*crop.CO2RT + (crop.GLV+crop.RWLVG1)*crop.CO2LV +
+        (crop.GST+crop.GST1)*crop.CO2ST + crop.GSO*crop.CO2SO+(crop.GSTR+crop.RWSTR1)*crop.CO2STR+
+        (1.-crop.LRSTR)*crop.LSTR*crop.FCSTR*44./12.;
+
+        crop.CTRANS = crop.RWLVG1*crop.FCLV+crop.GST1*crop.FCST+crop.RWSTR1*crop.FCSTR+crop.GRT1*crop.FCRT;
+        crop.RTNASS = ((crop.DTGA*30./44.-crop.RMCR)*44./30.)-crop.RGCR-(crop.CTRANS*44./12.);
+
+        //----------Carbon balance check
+        crop.CKCIN  = (crop.WLVG+crop.WLVD-crop.WLVGI)*crop.FCLV+(crop.WSTS-crop.WSTI)*crop.FCST+crop.WSTR*crop.FCSTR
+                    +(crop.WRT-crop.WRTI)*crop.FCRT+crop.WSO*crop.FCSO;
+        crop.CKCFL  = crop.TNASS*(12./44.);
+        SUBCBC(crop.CKCIN,crop.CKCFL, time ,crop.CBCHK, TERMINAL);
 
     }
     else if(crop.CROPSTA == 0){

@@ -76,7 +76,8 @@ void NNOSTRESS2_rate( double NFLVI, std::vector<double> NMAXLT, std::vector<doub
         //          day, NFLV1 is used;l between first and last observation day, interpolated
         //          observed values are used; after last observation day, NFLV1 is used again
         //          Forcing is determined by the variable NFLV_FRC in the experiment data file.
-        NFLV = NFLV1 * DELT;
+        // INTGR2 without forcing returns NFLV1
+        NFLV = NFLV1;
     }
 }
 

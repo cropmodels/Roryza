@@ -45,8 +45,7 @@ void SASTRO(double IDOY, double LAT, double &SOLCON, double &ANGOT, double &DAYL
 
 
     //     Error check and conversion of day number
-    if ( fabs(LAT) > 90.)  //problem messgae
-
+    // if (fabs(LAT) > 90.) { /* invalid latitude */ }
     DOY = double(IDOY);
 
 //     Declination of the sun as a function of daynumber,

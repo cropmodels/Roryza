@@ -1,0 +1,213 @@
+/*
+Roryza Rcpp Module
+*/
+
+#include <Rcpp.h>
+#include "model.h"
+
+void setWeather(oryza_model* m, Rcpp::NumericVector date, Rcpp::NumericVector tmin, Rcpp::NumericVector tmax,
+                Rcpp::NumericVector srad, Rcpp::NumericVector prec, Rcpp::NumericVector wind, Rcpp::NumericVector vapr) {
+	Weather wth;
+	wth.tmin = Rcpp::as<std::vector<double>>(tmin);
+	wth.tmax = Rcpp::as<std::vector<double>>(tmax);
+	wth.srad = Rcpp::as<std::vector<double>>(srad);
+	wth.wind = Rcpp::as<std::vector<double>>(wind);
+	wth.vapr = Rcpp::as<std::vector<double>>(vapr);
+	wth.prec = Rcpp::as<std::vector<double>>(prec);
+	wth.date = Rcpp::as<std::vector<long>>(date);
+	m->wth = wth;
+}
+
+// declared in oryza_R_interface.cpp
+void setSoil(oryza_model *m, Rcpp::List soil);
+
+
+RCPP_EXPOSED_CLASS(Weather)
+RCPP_EXPOSED_CLASS(oryza_control)
+RCPP_EXPOSED_CLASS(oryza_crop)
+RCPP_EXPOSED_CLASS(oryza_soil)
+RCPP_EXPOSED_CLASS(OryzaOutput)
+RCPP_EXPOSED_CLASS(oryza_model)
+
+
+RCPP_MODULE(oryza){
+	using namespace Rcpp;
+
+	class_<oryza_control>("OryzaControl")
+		.field("modelstart", &oryza_control::modelstart)
+		.field("cropstart", &oryza_control::cropstart)
+		.field("max_duration", &oryza_control::max_duration)
+		.field("water_limited", &oryza_control::water_limited)
+		.field("nitrogen_limited", &oryza_control::nitrogen_limited)
+		.field("latitude", &oryza_control::latitude)
+		.field("elevation", &oryza_control::elevation)
+		.field("CO2", &oryza_control::CO2)
+		.field("ANGSTA", &oryza_control::ANGSTA)
+		.field("ANGSTB", &oryza_control::ANGSTB)
+		.field("FAOF", &oryza_control::FAOF)
+		.field("output_option", &oryza_control::output_option)
+		.field("RICETYPE", &oryza_control::RICETYPE)
+		.field("ESTAB", &oryza_control::ESTAB)
+		.field("ETMOD", &oryza_control::ETMOD)
+		.field("PRODENV", &oryza_control::PRODENV)
+		.field("NITROENV", &oryza_control::NITROENV)
+		.field("SBDUR", &oryza_control::SBDUR)
+		.field("TMPSB", &oryza_control::TMPSB)
+		.field("TMCTB", &oryza_control::TMCTB)
+		.field("WATBAL", &oryza_control::WATBAL)
+		.field("SWITIR", &oryza_control::SWITIR)
+		.field("DVSIMAX", &oryza_control::DVSIMAX)
+		.field("IRRI", &oryza_control::IRRI)
+		.field("SLMIN", &oryza_control::SLMIN)
+		.field("KPAMIN", &oryza_control::KPAMIN)
+		.field("WCMIN", &oryza_control::WCMIN)
+		.field("WL0DAY", &oryza_control::WL0DAY)
+		.field("WL0MIN", &oryza_control::WL0MIN)
+		.field("RIRRIT", &oryza_control::RIRRIT)
+		.field("ISTAGET", &oryza_control::ISTAGET)
+	;
+
+	class_<Weather>("Weather")
+		.constructor()
+		.field("date", &Weather::date)
+		.field("srad", &Weather::srad)
+		.field("tmin", &Weather::tmin)
+		.field("tmax", &Weather::tmax)
+		.field("prec", &Weather::prec)
+		.field("wind", &Weather::wind)
+		.field("vapr", &Weather::vapr)
+	;
+
+	class_<oryza_crop>("OryzaCrop")
+		.field("TBD", &oryza_crop::TBD)
+		.field("TBLV", &oryza_crop::TBLV)
+		.field("TMD", &oryza_crop::TMD)
+		.field("TOD", &oryza_crop::TOD)
+		.field("DVRJ", &oryza_crop::DVRJ)
+		.field("DVRI", &oryza_crop::DVRI)
+		.field("DVRP", &oryza_crop::DVRP)
+		.field("DVRR", &oryza_crop::DVRR)
+		.field("MOPP", &oryza_crop::MOPP)
+		.field("PPSE", &oryza_crop::PPSE)
+		.field("SHCKD", &oryza_crop::SHCKD)
+		.field("COLDMIN", &oryza_crop::COLDMIN)
+		.field("COLDEAD", &oryza_crop::COLDEAD)
+		.field("RGRLMX", &oryza_crop::RGRLMX)
+		.field("RGRLMN", &oryza_crop::RGRLMN)
+		.field("SHCKL", &oryza_crop::SHCKL)
+		.field("SWISLA", &oryza_crop::SWISLA)
+		.field("ASLA", &oryza_crop::ASLA)
+		.field("BSLA", &oryza_crop::BSLA)
+		.field("CSLA", &oryza_crop::CSLA)
+		.field("DSLA", &oryza_crop::DSLA)
+		.field("SLAMAX", &oryza_crop::SLAMAX)
+		.field("SLATB", &oryza_crop::SLATB)
+		.field("SSGATB", &oryza_crop::SSGATB)
+		.field("FRPAR", &oryza_crop::FRPAR)
+		.field("SCP", &oryza_crop::SCP)
+		.field("CO2REF", &oryza_crop::CO2REF)
+		.field("CO2", &oryza_crop::CO2)
+		.field("KDFTB", &oryza_crop::KDFTB)
+		.field("KNFTB", &oryza_crop::KNFTB)
+		.field("EFFTB", &oryza_crop::EFFTB)
+		.field("REDFTT", &oryza_crop::REDFTT)
+		.field("NFLVTB", &oryza_crop::NFLVTB)
+		.field("MAINLV", &oryza_crop::MAINLV)
+		.field("MAINST", &oryza_crop::MAINST)
+		.field("MAINSO", &oryza_crop::MAINSO)
+		.field("MAINRT", &oryza_crop::MAINRT)
+		.field("TREF", &oryza_crop::TREF)
+		.field("Q10", &oryza_crop::Q10)
+		.field("CRGLV", &oryza_crop::CRGLV)
+		.field("CRGST", &oryza_crop::CRGST)
+		.field("CRGSO", &oryza_crop::CRGSO)
+		.field("CRGRT", &oryza_crop::CRGRT)
+		.field("CRGSTR", &oryza_crop::CRGSTR)
+		.field("LRSTR", &oryza_crop::LRSTR)
+		.field("FSTR", &oryza_crop::FSTR)
+		.field("TCLSTR", &oryza_crop::TCLSTR)
+		.field("SPGF", &oryza_crop::SPGF)
+		.field("WGRMX", &oryza_crop::WGRMX)
+		.field("FSHTB", &oryza_crop::FSHTB)
+		.field("FLVTB", &oryza_crop::FLVTB)
+		.field("FSTTB", &oryza_crop::FSTTB)
+		.field("FSOTB", &oryza_crop::FSOTB)
+		.field("DRLVT", &oryza_crop::DRLVT)
+		.field("FCLV", &oryza_crop::FCLV)
+		.field("FCST", &oryza_crop::FCST)
+		.field("FCSO", &oryza_crop::FCSO)
+		.field("FCRT", &oryza_crop::FCRT)
+		.field("FCSTR", &oryza_crop::FCSTR)
+		.field("GZRT", &oryza_crop::GZRT)
+		.field("ZRTMCW", &oryza_crop::ZRTMCW)
+		.field("ZRTMCD", &oryza_crop::ZRTMCD)
+		.field("NFLVI", &oryza_crop::NFLVI)
+		.field("NMAXLT", &oryza_crop::NMAXLT)
+		.field("LAPE", &oryza_crop::LAPE)
+		.field("DVSI", &oryza_crop::DVSI)
+		.field("WLVGI", &oryza_crop::WLVGI)
+		.field("WSTI", &oryza_crop::WSTI)
+		.field("WRTI", &oryza_crop::WRTI)
+		.field("WSOI", &oryza_crop::WSOI)
+		.field("ZRTI", &oryza_crop::ZRTI)
+		.field("ZRTTR", &oryza_crop::ZRTTR)
+		.field("NH", &oryza_crop::NH)
+		.field("NPLH", &oryza_crop::NPLH)
+		.field("NPLSB", &oryza_crop::NPLSB)
+		.field("NPLDS", &oryza_crop::NPLDS)
+		.field("ULLS", &oryza_crop::ULLS)
+		.field("LLLS", &oryza_crop::LLLS)
+		.field("ULDL", &oryza_crop::ULDL)
+		.field("LLDL", &oryza_crop::LLDL)
+		.field("ULLE", &oryza_crop::ULLE)
+		.field("LLLE", &oryza_crop::LLLE)
+		.field("ULRT", &oryza_crop::ULRT)
+		.field("LLRT", &oryza_crop::LLRT)
+		.field("SWIRTR", &oryza_crop::SWIRTR)
+		.field("SWIRTRF", &oryza_crop::SWIRTRF)
+	;
+
+	class_<oryza_soil>("OryzaSoil")
+		.constructor()
+		.field("SCODE", &oryza_soil::SCODE)
+		.field("SWITPD", &oryza_soil::SWITPD)
+		.field("SWITGW", &oryza_soil::SWITGW)
+		.field("SWITPF", &oryza_soil::SWITPF)
+		.field("SWITVP", &oryza_soil::SWITVP)
+		.field("SWITKH", &oryza_soil::SWITKH)
+		.field("NL", &oryza_soil::NL)
+		.field("TKL", &oryza_soil::TKL)
+		.field("ZRTMS", &oryza_soil::ZRTMS)
+		.field("WL0MX", &oryza_soil::WL0MX)
+		.field("WL0I", &oryza_soil::WL0I)
+		.field("FIXPERC", &oryza_soil::FIXPERC)
+		.field("KST", &oryza_soil::KST)
+		.field("WCST", &oryza_soil::WCST)
+		.field("VGA", &oryza_soil::VGA)
+		.field("VGL", &oryza_soil::VGL)
+		.field("VGN", &oryza_soil::VGN)
+		.field("VGR", &oryza_soil::VGR)
+		.field("WCLI", &oryza_soil::WCLI)
+		.field("ZWTB", &oryza_soil::ZWTB)
+		.field("RIWCLI", &oryza_soil::RIWCLI)
+	;
+
+	class_<OryzaOutput>("OryzaOutput")
+		.field("names", &OryzaOutput::names)
+		.field("values", &OryzaOutput::values)
+	;
+
+	class_<oryza_model>("OryzaModel")
+		.constructor()
+		.method("run", &oryza_model::run)
+		.method("setWeather", &setWeather)
+		.method("setSoil", &setSoil)
+		.field("crop", &oryza_model::crop)
+		.field("soil", &oryza_model::soil)
+		.field("control", &oryza_model::control)
+		.field("wth", &oryza_model::wth)
+		.field("output", &oryza_model::output)
+		.field("messages", &oryza_model::messages)
+		.field("fatalError", &oryza_model::fatalError)
+	;
+}
