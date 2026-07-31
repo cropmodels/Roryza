@@ -1,0 +1,4 @@
+useDynLib(Roryza, .registration=TRUE)
+import(methods, Rcpp, meteor)
+exportMethods("crop<-", "soil<-", "control<-", "weather<-", "run")
+export(oryza, oryza_model, oryza_crop, oryza_soil, oryza_control)
