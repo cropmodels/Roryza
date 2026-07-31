@@ -60,15 +60,28 @@ partial simulation data may be returned}
 }
 
 \examples{
-\dontrun{
+# weather data (IRRI, Los Banos)
+f <- system.file("extdata/Philippines_IRRI.csv", package="meteor")
+wth <- read.csv(f)
+wth$date <- as.Date(wth$date)
+
 crop <- oryza_crop("IR72")
 soil <- oryza_soil("paddy")
 control <- oryza_control()
+control$modelstart <- as.Date("1991-01-15")
+control$latitude <- 14.18
+control$elevation <- 21
 control$water_limited <- TRUE
-m <- oryza_model(crop, weather, soil, control)
-out <- run(m)
+control$SWITIR <- 0L
 
-crop(m) <- oryza_crop("IR72")
+m <- oryza_model(crop, wth, soil, control)
+out <- run(m)
+plot(out$date, out$LAI, type="l", xlab="Date", ylab="LAI")
+
+# change soil / control and re-run
+soil(m) <- oryza_soil("potential")
+control$water_limited <- FALSE
+control(m) <- control
 out2 <- run(m)
-}
+plot(out2$date, out2$WSO, type="l", xlab="Date", ylab="Storage organs (kg/ha)")
 }

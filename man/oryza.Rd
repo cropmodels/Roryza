@@ -1,27 +1,31 @@
 \name{oryza}
 \alias{oryza}
 \title{ORYZA2000 rice crop growth model}
+
 \description{
 Run the ORYZA2000 rice crop growth model (potential or water-limited).
 }
+
 \usage{
 oryza(crop, weather, soil, control)
 }
+
 \arguments{
 \item{crop}{list. Crop parameters (see \code{\link{oryza_crop}})}
 \item{weather}{data.frame with weather data}
 \item{soil}{list. Soil parameters (see \code{\link{oryza_soil}}); used when \code{water_limited=TRUE}}
 \item{control}{list. Model control options (see \code{\link{oryza_control}})}
 }
+
 \value{
-data.frame with daily simulation results. Water-limited runs also return
-\code{TRW}, \code{WL0}, \code{IR}, \code{MSKPA1}, \code{PCEW}, \code{LESTRS}.
+data.frame with daily simulation results.
 }
+
 \seealso{
 \code{\link{oryza_model}}, \code{\link{oryza_crop}}, \code{\link{oryza_soil}}, \code{\link{oryza_control}}
 }
 \details{
-Weather columns (same units as RWofost / meteor):
+Weather variables
 
 \tabular{lll}{
 \code{date} \tab Date \tab - \cr
@@ -33,13 +37,33 @@ Weather columns (same units as RWofost / meteor):
 }
 
 Set \code{control$water_limited <- TRUE} and supply a PADDY soil for water-limited production.
+
 Irrigation is controlled by \code{control$SWITIR} (0=rainfed, 2=pond depth, 3=soil KPa, 6=stage thresholds).
 }
+
 \examples{
-\dontrun{
+# weather data (IRRI, Los Banos)
+f <- system.file("extdata/Philippines_IRRI.csv", package="meteor")
+wth <- read.csv(f)
+wth$date <- as.Date(wth$date)
+head(wth)
+
 crop <- oryza_crop("IR72")
-control <- oryza_control()
 soil <- oryza_soil("potential")
-# out <- oryza(crop, weather, soil, control)
-}
+control <- oryza_control()
+control$modelstart <- as.Date("1991-01-15")
+control$latitude <- 14.18
+control$elevation <- 21
+
+# potential production
+out <- oryza(crop, wth, soil, control)
+tail(out)
+plot(out$date, out$LAI, type="l", xlab="Date", ylab="LAI")
+
+# water-limited (rainfed PADDY)
+soil <- oryza_soil("paddy")
+control$water_limited <- TRUE
+control$SWITIR <- 0L
+outw <- oryza(crop, wth, soil, control)
+plot(outw$date, outw$WSO, type="l", xlab="Date", ylab="Storage organs (kg/ha)")
 }
