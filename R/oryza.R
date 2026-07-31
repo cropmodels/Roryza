@@ -7,7 +7,11 @@ if (!isGeneric("control<-")) { setGeneric("control<-", function(x, value) standa
 if (!isGeneric("weather<-")) { setGeneric("weather<-", function(x, value) standardGeneric("weather<-")) }
 
 
-oryza <- function(crop, weather, soil, control) {
+oryza <- function(crop, weather, soil, control, engine = c("fse", "cpp")) {
+	engine <- match.arg(engine)
+	if (engine == "fse") {
+		return(.oryza_via_fse(crop, weather, soil, control))
+	}
 	control$modelstart <- as.integer(as.Date(control$modelstart))
 	if (!is.null(control$TMCTB) && is.matrix(control$TMCTB)) {
 		control$TMCTB <- as.vector(control$TMCTB)
@@ -15,6 +19,82 @@ oryza <- function(crop, weather, soil, control) {
 	d <- .oryza(crop, weather, soil, control)
 	date <- as.Date(control$modelstart, origin = "1970-01-01") + (d[, "step"] - 1)
 	data.frame(date = date, d)
+}
+
+
+.oryza_via_fse <- function(crop, weather, soil, control) {
+	wl <- isTRUE(as.logical(control$water_limited))
+	nl <- isTRUE(as.logical(control$nitrogen_limited))
+	watbal <- if (!is.null(control$WATBAL)) toupper(as.character(control$WATBAL)) else "PADDY"
+	# TTUTIL distinguishes INTEGER vs REAL by token form ("2" vs "2.")
+	.fse_real <- function(x) sprintf("%.6f", as.numeric(x))
+	overrides <- list()
+	if (!is.null(control$ESTAB)) overrides$ESTAB <- sprintf("'%s'", control$ESTAB)
+	if (!is.null(control$ETMOD)) overrides$ETMOD <- sprintf("'%s'", control$ETMOD)
+	if (!is.null(control$RICETYPE)) overrides$RICETYPE <- sprintf("'%s'", control$RICETYPE)
+	if (!is.null(control$SWITIR)) overrides$SWITIR <- as.integer(control$SWITIR)
+	if (!is.null(control$IRRI)) overrides$IRRI <- .fse_real(control$IRRI)
+	if (!is.null(control$KPAMIN)) overrides$KPAMIN <- .fse_real(control$KPAMIN)
+	if (!is.null(control$DVSIMAX)) overrides$DVSIMAX <- .fse_real(control$DVSIMAX)
+	if (!is.null(control$WCMIN)) overrides$WCMIN <- .fse_real(control$WCMIN)
+	if (!is.null(control$WL0MIN)) overrides$WL0MIN <- .fse_real(control$WL0MIN)
+	if (!is.null(control$SBDUR)) overrides$SBDUR <- as.integer(control$SBDUR)
+	# When N-limited and fertilizer not supplied, use the classic IRRI 225 kg N schedule
+	if (nl && is.null(control$FERTIL)) {
+		overrides$FERTIL <- c(
+			"0.", "0.", "1.", "0.", "11.", "0.", "12.", "60.", "13.", "0.",
+			"29.", "0.", "30.", "60.", "31.", "0.", "66.", "0.", "67.", "60.",
+			"68.", "0.", "94.", "0.", "95.", "45.", "96.", "0.", "366.", "0."
+		)
+	} else if (!is.null(control$FERTIL)) {
+		v <- control$FERTIL
+		if (is.matrix(v)) v <- as.vector(v)
+		overrides$FERTIL <- as.character(as.numeric(v))
+	}
+	if (!is.null(control$SOILSP)) overrides$SOILSP <- .fse_real(control$SOILSP)
+
+	prdel <- if (!is.null(control$PRDEL)) as.numeric(control$PRDEL) else 1
+	workdir <- oryza_fse_prepare(watbal = watbal, nitrogen_limited = nl,
+		water_limited = wl, prdel = prdel, overrides = overrides)
+	on.exit(unlink(workdir, recursive = TRUE), add = TRUE)
+
+	if (!missing(weather) && !is.null(weather)) {
+		ms <- as.Date(control$modelstart)
+		yr <- as.integer(format(ms, "%Y"))
+		wfile <- file.path(workdir, sprintf("PHIL1.%03d", yr %% 1000L))
+		lon <- if (!is.null(control$longitude)) control$longitude else 121.25
+		lat <- if (!is.null(control$latitude)) control$latitude else 14.18
+		elev <- if (!is.null(control$elevation)) control$elevation else 21
+		oryza_write_weather(weather, wfile, longitude = lon, latitude = lat, elevation = elev)
+		exp <- readLines(file.path(workdir, "experiment.dat"), warn = FALSE)
+		exp <- .fse_set_raw(exp, "IYEAR", yr)
+		exp <- .fse_set_raw(exp, "STTIME", as.numeric(format(ms, "%j")))
+		writeLines(exp, file.path(workdir, "experiment.dat"), useBytes = TRUE)
+	}
+
+	# crop.dat: keep packaged IR72 template (matches oryza_crop("IR72"))
+	# soil: selected via WATBAL in oryza_fse_prepare; soil list reserved for future DAT writer
+	invisible(crop); invisible(soil)
+
+	res <- oryza_fse(workdir, quiet = TRUE)
+	.oryza_res_to_api(res, control)
+}
+
+
+.oryza_res_to_api <- function(res, control) {
+	ms <- as.Date(control$modelstart)
+	# TIME in ORYZA is days since STTIME on the timer; for template STTIME=1, TIME==DOY when IYEAR matches
+	if ("DOY" %in% names(res) && "YEAR" %in% names(res)) {
+		date <- as.Date(paste(as.integer(res$YEAR), as.integer(res$DOY)), format = "%Y %j")
+	} else {
+		date <- ms + (res$TIME - 1)
+	}
+	keep <- c("DVS", "LAI", "WAGT", "WST", "WLVG", "WLVD", "WLV", "WSO", "WRR14",
+		"TRC", "TRW", "EVSC", "WL0", "IR", "MSKPA1", "CROPSTA", "PCEW", "LESTRS",
+		"LRSTRS", "NFLV", "ZRT", "RAIN", "RAINCU")
+	keep <- intersect(keep, names(res))
+	out <- data.frame(date = date, step = as.integer(res$TIME), res[keep], check.names = FALSE)
+	out
 }
 
 

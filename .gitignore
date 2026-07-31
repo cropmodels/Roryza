@@ -1,2 +1,9 @@
 dev
 *.o
+*.dll
+*.so
+*.a
+*.Rcheck
+.Rproj.user
+.Rhistory
+.RData

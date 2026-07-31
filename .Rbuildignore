@@ -1,5 +1,9 @@
-.gitignore
-.gitattributes
-^C
-LICENSE
-README.md
+^dev$
+^src/fse/_
+^src/fse/.*\.o$
+^tests/debug_
+^tests/compare_fse_bins\.R$
+^\.git$
+^\.gitignore$
+^.*\.Rproj$
+^\.Rproj\.user$
