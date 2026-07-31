@@ -53,7 +53,9 @@ double SETPTD( int IDOY, double LAT, double RF, double RDD, double TMDA ){
     PTFAC = 1.42;
 
     //     Checks
-    if (RDD < 0.5E6) {} //error message
+    if (RDD < 0.5E6) {
+		//error message
+	}
 
     std::vector<double> result = SVPS1(TMDA);
     DUMR1 = result[0];

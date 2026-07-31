@@ -76,9 +76,10 @@ std::vector<double> SETPMD(int IDOY, double LAT, int ISURF, double RF, double AN
                         double VP){
 
     //     Local parameters
-    int INLOOP,ILW;
+    // ILW/FU2 set in branches below; 0 if inputs invalid (FORTRAN would be undefined)
+    int INLOOP,ILW = 0;
     double LHVAP,PSCH,SIGMA,RHOCP,RBGL,VPS,VPSL,HUM,VPD,ANGOT;
-    double DATMTR,RDLOI,RDLII,RDLO,RDLI,RDN,CLEAR,FU2;
+    double DATMTR,RDLOI,RDLII,RDLO,RDLI = 0.,RDN,CLEAR,FU2 = 0.;
     double EA,RE,DTN,VPS2;
     double DUMR1,DUMR2,DUMR3,DUMR4,DUMR5,DUMR6,DUMR7;
     bool EQUIL;
@@ -91,11 +92,11 @@ std::vector<double> SETPMD(int IDOY, double LAT, int ISURF, double RF, double AN
     SIGMA = 5.668E-8;
     RHOCP = 1240.;
     RBGL = 8.31436;
-    //     Checks
+    //     Checks (empty bodies — need braces so the next if is not nested)
 
-    if (TMDI < 0.) //problem message
-    if (RDD < 0.5E6) //problem message
-    if (WN < 0.2) //problem message
+    if (TMDI < 0.) { /* problem message */ }
+    if (RDD < 0.5E6) { /* problem message */ }
+    if (WN < 0.2) { /* problem message */ }
 
     //     decide which calculation for longwave radiation must be used
     if(ANGA == 0. && ANGB == 0.){
@@ -197,7 +198,7 @@ std::vector<double> SETPMD(int IDOY, double LAT, int ISURF, double RF, double AN
             EQUIL  = fabs(DTN-DT) < TMDI;
             INLOOP = INLOOP+1;
 
-            if (INLOOP > 100  &&  !EQUIL) // error message
+            if (INLOOP > 100  &&  !EQUIL) { /* error message */ }
             DT = DTN;
         }
     }

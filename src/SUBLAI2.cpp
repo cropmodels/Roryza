@@ -40,13 +40,12 @@
 void SUBLAI2(int CROPSTA, double RGRLMX, double RGRLMN, double TSLV, double HULV, double SHCKL, double LESTRS, double RNSTRS, double SLA,
             double NH, double NPLH, double NPLSB, double DVS, double LAI, std::string ESTAB, double RWLVG, double DLDR, double WLVG, double &GLAI, double &RGRL){
 
-    //-----Local parameters
-    double          TSLVTR, TSHCKL, GLAI1,GLAI2, X, TESTSET;
-    double          WLVGEXP, LAIEXP, WLVGEXS, LAIEXS, TEST;
-    bool       TESTL ;
+    //-----Local parameters (SAVE in FORTRAN)
+    static double TSLVTR = 0., TSHCKL = 0., X = 1., TESTSET = 0.00001;
+    static double WLVGEXP = 0., LAIEXP = 0., WLVGEXS = 0., LAIEXS = 0.;
+    static bool   TESTL = false;
+    double        GLAI1, GLAI2, TEST;
 
-
-    //SAVE;
     if (CROPSTA  <=  1)  {
         X       = 1.;
         TESTL   = false;
@@ -146,14 +145,3 @@ void SUBLAI2(int CROPSTA, double RGRLMX, double RGRLMN, double TSLV, double HULV
     }
 
 }
-
-
-
-
-
-
-
-
-
-
-

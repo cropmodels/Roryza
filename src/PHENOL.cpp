@@ -37,14 +37,16 @@
 std::vector<double> PHENOL( double DVS, double DVRJ, double DVRI, double DVRP, double DVRR, double HU, double DAYL, double MOPP,
                         double PPSE, double TS, double SHCKD, int CROPSTA){
 
-    //-----Local parameters
-    double    DL, TSTR, PPFAC;
+    //-----Local parameters (TSTR is SAVE in FORTRAN PHENOL.f90)
+    double    DL, PPFAC;
+    static double TSTR = 0.;
     //output
     double DVR = 0.0, TSHCKD;
 
     //bb patch to re-initialize transplanting shock:
     if (DVS < 0.01) {
         TSHCKD = 0.;
+        TSTR = 0.;
     }
 
     if (DVS >= 0. && DVS < 0.40) {
@@ -82,4 +84,3 @@ std::vector<double> PHENOL( double DVS, double DVRJ, double DVRI, double DVRP, d
 
 
 }
-

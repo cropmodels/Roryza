@@ -2,9 +2,9 @@
 
 R package for the **ORYZA2000** rice crop growth simulation model.
 
-The API mirrors [RWofost](https://github.com/cropmodels/Rwofost): daily weather (`meteor` units), crop/soil/control parameter lists (INI files under `inst/oryza/`), and either a one-shot `oryza()` call or an `oryza_model()` object with `run()`.
+Either a one-shot `oryza()` call or an `oryza_model()` object with `run()`.
 
-Reference FORTRAN/FSE sources, rebuild scripts, and numerical tests live under `dev/` (not part of the installed package).
+The API mirrors [RWofost](https://github.com/cropmodels/Rwofost)
 
 ## Install
 
@@ -38,26 +38,7 @@ out <- oryza(crop, weather, soil, control)
 | `wind` | m s⁻¹ |
 | `prec` | mm day⁻¹ |
 
-## Tests
-
-```r
-# C++ API smoke + numeric anchors (always)
-tinytest::test_all()
-
-# Also runs FORTRAN/FSE scenarios when at_home and
-# dev/inst/oryza3.exe exists (rebuild first):
-#   Rscript dev/tools/build_oryza3.R
-```
-
-## FORTRAN reference (`dev/`)
-
-```bash
-Rscript dev/tools/build_oryza3.R
-Rscript dev/tests/test_oryza3_rebuild.R
-```
-
-Binary is written to `dev/inst/oryza3.exe`.
 
 ## References
 
-Bouman et al. (2001) *ORYZA2000: modeling lowland rice*. IRRI / Wageningen University.
+Bouman, B. A. M., Kropff, M. J., Tuong, T. P., Wopereis, M. C. S., ten Berge, H. F. M., & van Laar, H. H. (2001). ORYZA2000 : modeling lowland rice. ORYZA2000: modeling lowland rice. International Rice Research Institute/ Wageningen University. https://books.irri.org/9712201716_content.pdf

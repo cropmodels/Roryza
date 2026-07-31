@@ -53,7 +53,7 @@ std::vector<double> SGPC2( double CSLV, double AMAX, double EFF, double ECPDF, d
     EPS=0.10;
     NMAX=7;
     //output
-    double GPC, RAPC;
+    double GPC = 0.0, RAPC = 0.0;
 
     GPC   = 0.;
     GPCO  = 1.;
@@ -86,7 +86,8 @@ std::vector<double> SGPC2( double CSLV, double AMAX, double EFF, double ECPDF, d
             SUM1 = 0.;
             SUM2 = 0.;
 
-            for(int i = 0; i < IT; i++){
+            // FORTRAN SGPC2: DO J=1,IT
+            for(J = 1; J <= IT; J++){
                 SGPL (CSLV, AMAX, EFF,ECPDF, GAI, X, SINB, RDPDR, RDPDF, GPL2 , RAPL2);
                 SUM1 = SUM1+GPL2;
                 SUM2 = SUM2+RAPL2;

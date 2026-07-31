@@ -44,10 +44,11 @@
 void SUBLAI3(int CROPSTA,double RGRLMX, double RGRLMN, double TSLV, double HULV, double SHCKL, double LESTRS, double RNSTRS,
              double SLA, double NH, int NPLH, double NPLSB, double DVS, double LAI, std::string ESTAB, double RWLVG,double DLDR,
              double WLVG, double &GLAI, double &RGRL){
-    //-----Local parameters
-    double          TSLVTR, TSHCKL, GLAI1,GLAI2, X, TESTSET = 0.0;
-    double          WLVGEXP, LAIEXP, WLVGEXS, LAIEXS, TEST, DVSE;
-    bool       TESTL = false ;
+    //-----Local parameters (SAVE in FORTRAN SUBLAI3.f90)
+    static double TSLVTR = 0., TSHCKL = 0., X = 1., TESTSET = 0.01;
+    static double WLVGEXP = 0., LAIEXP = 0., WLVGEXS = 0., LAIEXS = 0.;
+    static bool   TESTL = false;
+    double        GLAI1, GLAI2, TEST, DVSE;
 
     if (CROPSTA  <=  1)  {
         X       = 1.;
@@ -86,82 +87,76 @@ void SUBLAI3(int CROPSTA,double RGRLMX, double RGRLMN, double TSLV, double HULV,
                 }
             }
             //------- 2. Transplanting effects: dilution and shock-setting
-        } else{
-            if(CROPSTA  ==  4){
-                //--------3.1. During transplanting shock-period
-                if (TSLV < (TSLVTR+TSHCKL)) {
-                    GLAI = 0.;
-                    DVSE = DVS;
-                    //--------3.2. After transplanting shock; drought stress effects
+        } else if(CROPSTA == 3){
+            TSLVTR = TSLV;
+            TSHCKL = SHCKL*TSLVTR;
+            GLAI   = (LAI*NH*NPLH/NPLSB) - LAI;
+            TESTL  = false;
+            X      = 1.;
+            //--------3. After transplanting: main crop growth
+        } else if(CROPSTA == 4){
+            //--------3.1. During transplanting shock-period
+            if (TSLV < (TSLVTR+TSHCKL)) {
+                GLAI = 0.;
+                // DVSE set but unused in FORTRAN SUBLAI3.f90
+                DVSE = DVS;
+                (void)DVSE;
+                //--------3.2. After transplanting shock; drought stress effects
+            } else{
+                if( (LAI < 1.0)  && (DVS < 1.0) ){
+                    GLAI = LESTRS * LAI*RGRL*HULV;
+                    WLVGEXP = WLVG;
+                    LAIEXP  = LAI;
                 } else{
-                    if( (LAI < 1.0)  && (DVS < 1.0) ){
-                        GLAI = LESTRS * LAI*RGRL*HULV;
-                        WLVGEXP = WLVG;
-                        LAIEXP  = LAI;
+                    //                 There is a transition from RGRL to SLA determined growth
+                    //                 when difference between simulated and imposed SLA is less than 1%
+                    if(!TESTL){
+                        TEST = fabs((LAI/NOTNUL(WLVG))-SLA)/SLA;
+                        if (TEST  <  TESTSET) TESTL = true;
+                    }
+                    if (TESTL)  {
+                        GLAI = ((WLVG+RWLVG-DLDR)*SLA)-LAI;
                     } else{
-                        //                 There is a transition from RGRL to SLA determined growth
-                        //                 when difference between simulated and imposed SLA is less than 1%
-                        if(!TESTL){
-                            TEST = fabs((LAI/NOTNUL(WLVG))-SLA)/SLA;
-                            if (TEST  <  TESTSET) TESTL = true;
-                        }
-                        if (TESTL)  {
-                            GLAI = ((WLVG+RWLVG-DLDR)*SLA)-LAI;
+                        GLAI1 = ((WLVG+RWLVG-DLDR-WLVGEXP)*SLA+LAIEXP)-LAI;
+                        GLAI2 = ((WLVG+RWLVG-DLDR)*SLA)-LAI;
+                        if (GLAI2  <  0.   &&  GLAI1  >  0.){
+                            GLAI = GLAI1/(X+1);
                         } else{
-                            GLAI1 = ((WLVG+RWLVG-DLDR-WLVGEXP)*SLA+LAIEXP)-LAI;
-                            GLAI2 = ((WLVG+RWLVG-DLDR)*SLA)-LAI;
-                            if (GLAI2  <  0.   &&  GLAI1  >  0.){
-                                GLAI = GLAI1/(X+1);
-                            } else{
-                                GLAI  = (GLAI1+X*GLAI2)/(X+1.);
-                            }
-                            X = X+1.;
+                            GLAI  = (GLAI1+X*GLAI2)/(X+1.);
                         }
+                        X = X+1.;
                     }
                 }
             }
-            //===================================================================*
-            //------Direct-seeded rice                                           *
-            //===================================================================*
         }
-
-
-
-    } else{
-        if (ESTAB  ==  "DIRECT-SEED"){
-            if((LAI < 1.0)  && (DVS < 1.0)){
-                GLAI    = LAI*RGRL*HULV * LESTRS;
-                WLVGEXP = WLVG;
-                LAIEXP  = LAI;
+//===================================================================*
+//------Direct-seeded rice                                           *
+//===================================================================*
+    } else if (ESTAB  ==  "DIRECT-SEED"){
+        if((LAI < 1.0)  && (DVS < 1.0)){
+            GLAI    = LAI*RGRL*HULV * LESTRS;
+            WLVGEXP = WLVG;
+            LAIEXP  = LAI;
+        } else{
+            //           There is a transition from RGRL to SLA determined growth
+            //           when difference between simulated and imposed SLA is less than 10%
+            if(!TESTL){
+                TEST = fabs((LAI/NOTNUL(WLVG))-SLA)/SLA;
+                if (TEST  <  TESTSET) TESTL = true;
+            }
+            if(TESTL) {
+                GLAI = ((WLVG + RWLVG - DLDR) * SLA) - LAI;
             } else{
-                //           There is a transition from RGRL to SLA determined growth
-                //           when difference between simulated and imposed SLA is less than 10%
-                if(!TESTL){
-                    TEST = fabs((LAI/NOTNUL(WLVG))-SLA)/SLA;
-                    if (TEST  <  TESTSET) TESTL = true;
-                }
-                if(TESTL) {
-                    GLAI = ((WLVG + RWLVG - DLDR) * SLA) - LAI;
+                GLAI1 = ((WLVG+RWLVG-DLDR-WLVGEXP)*SLA+LAIEXP)-LAI;
+                GLAI2 = ((WLVG+RWLVG-DLDR)*SLA)-LAI;
+                if (GLAI2  <  0.   &&  GLAI1  >  0.){
+                    GLAI = GLAI1/(X+1);
                 } else{
-                    GLAI1 = ((WLVG+RWLVG-DLDR-WLVGEXP)*SLA+LAIEXP)-LAI;
-                    GLAI2 = ((WLVG+RWLVG-DLDR)*SLA)-LAI;
-                    if (GLAI2  <  0.   &&  GLAI1  >  0.){
-                        GLAI = GLAI1/(X+1);
-                    } else{
-                        GLAI  = (GLAI1+X*GLAI2)/(X+1.);
-                    }
-                    X = X + 1.;
+                    GLAI  = (GLAI1+X*GLAI2)/(X+1.);
                 }
+                X = X + 1.;
             }
         }
     }
 
-
-
-
-
 }
-
-
-
-

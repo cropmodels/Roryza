@@ -16,7 +16,7 @@ expect_true(inherits(m, "Rcpp_OryzaModel") || inherits(m, "C++Object") || !is.nu
 out <- run(m)
 expect_true(is.data.frame(out))
 expect_true(nrow(out) > 50)
-expect_equal(utils::tail(out$WSO, 1), 2921.962, tolerance = 0.1)
+expect_equal(utils::tail(out$WSO, 1), 2923.095, tolerance = 0.1)
 
 # one-shot oryza() should match object API on same inputs
 out2 <- oryza(crop, wth, soil, control)

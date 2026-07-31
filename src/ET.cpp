@@ -55,7 +55,8 @@ void ET(int ITASK, double ANGA, double ANGB, double RDD, double TMDA, double VP,
     
     //     Local variables
     int       ISURF;
-    double          ALB, DT, ETAE, ETRD;
+    // DT from SETPMD is unused here (same as FORTRAN ET2.f90)
+    double          ALB, ETAE = 0., ETRD = 0.;
     double          RF , RFS;
     //SAVE;
 
@@ -95,7 +96,7 @@ void ET(int ITASK, double ANGA, double ANGB, double RDD, double TMDA, double VP,
             ETD = setpmd[0];
             ETRD = setpmd[1];
             ETAE = setpmd[2];
-            DT = setpmd[3];
+            // setpmd[3] is DT; unused (FORTRAN ET2 likewise)
         }
         else if(ETMOD == "MAKKINK"){
             ETD = SETMKD(RDD, TMDA);

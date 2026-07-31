@@ -31,26 +31,10 @@
 
 // using namespace std;
 
+// Stub: FORTRAN nsoil.f90 body (FERTIL/RECNIT tables, SOILSP) not yet ported.
+// Callers currently use TNSOIL = 0 from the model object.
 double NSOIL( int ITASK, int IUNITD, int IUNITL, std::string FILEIT, double OUTPUT, double DELT, double DAE, double DVS, double NACR ){
-    //     OUTPUT
-    double TNSOIL;
-
-//-----Local variables
-    int INX, ILFERT, ILREC;
-    INX=100;
-    double FERT, RECOV, SOILSP, XFERT, NFERTP;
-    double FERTIL[100];
-    double RECNIT[100];
-
-
-
+    (void)ITASK; (void)IUNITD; (void)IUNITL; (void)FILEIT;
+    (void)OUTPUT; (void)DELT; (void)DAE; (void)DVS; (void)NACR;
     return 0.;
 }
-
-
-
-
-
-
-
-

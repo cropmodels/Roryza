@@ -20,8 +20,8 @@ expect_true(nrow(out) > 50)
 expect_true(all(c("TRW", "WL0", "IR", "MSKPA1", "PCEW", "LESTRS") %in% names(out)))
 
 expect_equal(max(out$DVS), 2.018796, tolerance = 1e-5)
-expect_equal(max(out$LAI), 3.722681, tolerance = 1e-4)
-expect_equal(utils::tail(out$WSO, 1), 2235.151, tolerance = 0.1)
+expect_equal(max(out$LAI), 3.718733, tolerance = 1e-4)
+expect_equal(utils::tail(out$WSO, 1), 2235.800, tolerance = 0.1)
 expect_true(max(out$TRW) > 0)
 expect_true(all(out$PCEW >= 0 & out$PCEW <= 1.0000001))
 
@@ -34,5 +34,5 @@ control$WL0MIN <- 10
 control$IRRI <- 50
 out2 <- oryza(crop, wth, soil, control)
 expect_true(nrow(out2) > 50)
-expect_equal(utils::tail(out2$WSO, 1), 2671.246, tolerance = 0.1)
+expect_equal(utils::tail(out2$WSO, 1), 2670.130, tolerance = 0.1)
 expect_true(sum(out2$IR > 0) > 0)

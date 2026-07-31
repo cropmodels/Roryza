@@ -21,10 +21,9 @@ void GPPARGET(double xGAI, double xGAID, double xAmaxIn, double xEffIn, double &
     //     local variables
     double AmaxCO2,SLNI;
     double Amax;
-    double tmpr1;
-    
-    //     avoid compiler warnings on unused variables
-    tmpr1 = xAmaxIn;
+
+    //     xAmaxIn unused (same as FORTRAN GPPARGET: tmpr1 = xAmaxIn)
+    (void)xAmaxIn;
 
     AmaxCO2 = 49.57/34.26*(1.-exp (-0.208*(cCO2-60.)/49.57));
     AmaxCO2 = std::max(0., AmaxCO2);

@@ -34,7 +34,7 @@
 // using namespace std;
 
 double SETMKD(double RDD, double TMDA){
-    double LHVAP, PSCH, VPS, VPSL, MAKFAC;
+    double LHVAP, PSCH, VPSL, MAKFAC;
     LHVAP = 2454.e3;
     PSCH = 0.067;
     MAKFAC = 0.63;
@@ -44,7 +44,7 @@ double SETMKD(double RDD, double TMDA){
     }
 
     std::vector<double> result = SVPS1(TMDA);
-    VPS = result[0];
+    // VPS = result[0] unused (same as FORTRAN SETMKD.f90)
     VPSL = result[1];
     //     Calculate Makkink evaporation, MAKFAC factor is calibrated for the
     //     Netherlands

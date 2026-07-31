@@ -46,14 +46,13 @@
 std::vector<double> SGPC1( double CSLV, double AMAX, double EFF, double ECPDF, double GAI, double SINB, double RDPDR, double RDPDF ){
 
     //output
-    double GPC, RAPC;
+    double GPC = 0.0, RAPC = 0.0;
     //     Gauss weights for three point Gauss
     double GSX[3] = {0.112702, 0.500000, 0.887298};
     double GSW[3] = {0.277778, 0.444444, 0.277778};
 
     //     Miscellaneous
     double GAID, GPL, RAPL;
-    int I1;
 
     for(int i = 0; i < 3; i++){
         GAID = GAI * GSX[i];
