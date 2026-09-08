@@ -7,7 +7,7 @@ Either a one-shot `oryza()` call or an `oryza_model()` object with `run()`.
 ## Install
 
 ```r
-install.packages("Roryza", repos = "https://rspatial.r-universe.dev")
+install.packages("Roryza", repos = "https://cropmodels.r-universe.dev")
 ```
 
 ## Example
