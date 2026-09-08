@@ -1,5 +1,5 @@
 Package: Roryza
-Description: An R/C++ implementation of the ORYZA2000 rice crop growth model. ORYZA2000 is a dynamic simulation model that uses daily weather data and crop, soil and management parameters to simulate rice growth and development. See Bouman et al. (2001) ORYZA2000: modeling lowland rice. IRRI / Wageningen University.
+Description: An R/C++ implementation of the ORYZA rice crop growth model. ORYZA is a dynamic simulation model that uses daily weather data and crop, soil and management parameters to simulate rice growth and development. See Bouman et al. (2001) ORYZA2000: modeling lowland rice. IRRI / Wageningen University.
 Type: Package
 Title: ORYZA Rice Crop Growth Simulation Model
 Version: 0.1-1

@@ -1,9 +1,6 @@
 \name{oryza_model}
 
 \alias{oryza_model}
-\alias{oryza_crop}
-\alias{oryza_soil}
-\alias{oryza_control}
 \alias{run}
 \alias{crop<-}
 \alias{soil<-}
@@ -15,19 +12,14 @@
 \alias{weather<-,Rcpp_OryzaModel,data.frame-method}
 \alias{run,Rcpp_OryzaModel-method}
 
-\title{ORYZA2000 model object interface}
+\title{ORYZA model object interface}
 
 \description{
-Create and run an ORYZA2000 model object, and load crop, soil and control parameters.
-Through this interface you first create a model object and then you run it. You can
-change single parameters and run the model again.
+Create an ORYZA model object and run it. Through this interface you first create a model object and then you run it. You can change single parameters and run the model again.
 }
 
 \usage{
 oryza_model(crop, weather, soil, control)
-oryza_crop(name = "")
-oryza_soil(name = "")
-oryza_control(filename = "")
 run(x, ...)
 crop(x) <- value
 soil(x) <- value
@@ -37,11 +29,9 @@ weather(x) <- value
 
 \arguments{
 \item{crop}{list. Crop parameters (see \code{\link{oryza_crop}})}
-\item{weather}{data.frame with weather data. See \code{\link{oryza}}}
+\item{weather}{data.frame with weather data. See Details}
 \item{soil}{list. Soil parameters (see \code{\link{oryza_soil}})}
 \item{control}{list. Model control options (see \code{\link{oryza_control}})}
-\item{name}{name of built-in crop or soil (\code{"IR72"}, \code{"paddy"}, \code{"potential"}), or path to an INI file}
-\item{filename}{path to control INI file (default: package \code{control.ini})}
 \item{x}{ORYZA model object (\code{Rcpp_OryzaModel})}
 \item{value}{crop, weather, soil, or control data, as above}
 \item{\dots}{additional arguments. \code{stopError} (logical): if an error occurs and
@@ -51,13 +41,36 @@ partial simulation data may be returned}
 
 \value{
 \code{oryza_model} returns an \code{OryzaModel} object.
-\code{oryza_crop}, \code{oryza_soil}, and \code{oryza_control} return named lists.
 \code{run} returns a data.frame of daily simulation results.
 }
 
-\seealso{
-\code{\link{oryza}}, \code{\link{predict}}
+\details{
+The weather data must be passed as a data.frame with the following variables and units.
+
+\tabular{llll}{
+	\tab \bold{variable} \tab \bold{description} \tab \bold{class / unit} \cr
+	\tab \code{date} \tab "Date" class variable \tab - \cr
+	\tab \code{srad} \tab Solar radiation  \tab kJ m-2 day-1 \cr
+	\tab \code{tmin} \tab Minimum temperature \tab degrees C \cr
+	\tab \code{tmax} \tab Maximum temperature \tab degrees C \cr
+	\tab \code{vapr} \tab Vapor pressure \tab kPa \cr
+	\tab \code{wind} \tab Wind speed \tab m s-1 \cr
+	\tab \code{prec} \tab Precipitation \tab mm day-1 \cr
 }
+
+There should be no time gaps between the days in the data.frame.
+}
+
+\seealso{
+\code{\link{oryza}}, \code{\link{oryza_crop}}, \code{\link{oryza_soil}},
+\code{\link{oryza_control}}, \code{\link{predict}}
+}
+
+
+\references{
+Bouman, B. A. M., Kropff, M. J., Tuong, T. P., Wopereis, M. C. S., ten Berge, H. F. M., & van Laar, H. H. (2001). ORYZA2000 : modeling lowland rice. International Rice Research Institute / Wageningen University. https://books.irri.org/9712201716_content.pdf
+}
+
 
 \examples{
 # weather data (IRRI, Los Banos)

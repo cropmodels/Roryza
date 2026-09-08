@@ -1,9 +1,9 @@
 \name{oryza}
 \alias{oryza}
-\title{ORYZA2000 rice crop growth model}
+\title{ORYZA rice crop growth model}
 
 \description{
-Run the ORYZA2000 rice crop growth model (potential or water-limited).
+Run the ORYZA rice crop growth model (potential or water-limited).
 }
 
 \usage{
