@@ -6,10 +6,10 @@ if (!isTRUE(tinytest::at_home())) {
 	exit_file("FORTRAN FSE tests run only at_home")
 }
 
-exe <- .oryza3_dev_exe()
-tmpl <- .oryza3_templates()
+exe <- .oryza2000_dev_exe()
+tmpl <- .oryza2000_templates()
 if (is.na(exe) || is.na(tmpl)) {
-	exit_file("dev/inst/oryza3.exe or templates not found — run Rscript dev/tools/build_oryza3.R")
+	exit_file("dev/inst/oryza2000.exe or templates not found — run Rscript dev/tools/build_oryza2000.R")
 }
 
 .parse_res <- function(f) {
@@ -39,7 +39,7 @@ if (is.na(exe) || is.na(tmpl)) {
 }
 
 .prepare <- function(watbal, water_limited = TRUE, nitrogen_limited = FALSE, prdel = 1) {
-	wd <- tempfile("oryza3_")
+	wd <- tempfile("oryza2000_")
 	dir.create(wd)
 	ok <- file.copy(list.files(tmpl, full.names = TRUE), wd, overwrite = TRUE)
 	expect_true(all(ok))
@@ -81,7 +81,7 @@ if (is.na(exe) || is.na(tmpl)) {
 	utils::tail(res$WSO[is.finite(res$WSO)], 1)
 }
 
-# Anchors from rebuilt oryza3.exe on packaged IRRI 1992 templates (PRDEL=1)
+# Anchors from rebuilt oryza2000.exe on packaged IRRI 1992 templates (PRDEL=1)
 cases <- list(
 	list(name = "POTENTIAL", watbal = "PADDY", wl = FALSE, nl = FALSE, wso = 9648.8),
 	list(name = "PADDY", watbal = "PADDY", wl = TRUE, nl = FALSE, wso = 7456.9),

@@ -29,13 +29,13 @@
 
 .notavailable <- function(group, error = TRUE) {
 	if (group == "crop") {
-		f <- list.files(system.file("oryza/crop", package = "Roryza"), full.names = TRUE)
+		f <- list.files(system.file("oryza/crop", package = "Roryza"), pattern = "\\.ini$", full.names = TRUE)
 	} else if (group == "soil") {
-		f <- list.files(system.file("oryza/soil", package = "Roryza"), full.names = TRUE)
+		f <- list.files(system.file("oryza/soil", package = "Roryza"), pattern = "\\.ini$", full.names = TRUE)
 	} else {
 		f <- character(0)
 	}
-	x <- gsub(".ini", "", basename(f))
+	x <- gsub("\\.ini$", "", basename(f))
 	if (error) {
 		stop(paste(group, "not available. Choose one of:\n"), paste(x, collapse = ", "), "\n")
 	}
@@ -73,10 +73,10 @@ oryza_soil <- function(name = "") {
 	if (file.exists(name)) {
 		return(.getNumLst(.readIniFile(name), make_matrix = FALSE))
 	}
-	f <- list.files(system.file("oryza/soil", package = "Roryza"), full.names = TRUE)
-	soils <- gsub(".ini", "", basename(f))
+	f <- list.files(system.file("oryza/soil", package = "Roryza"), pattern = "\\.ini$", full.names = TRUE)
+	soils <- gsub("\\.ini$", "", basename(f))
 	if (name %in% soils) {
-		return(.getNumLst(.readIniFile(f[which(name == soils)]), make_matrix = FALSE))
+		return(.getNumLst(.readIniFile(f[which(name == soils)[1]]), make_matrix = FALSE))
 	}
 	.notavailable("soil")
 }
@@ -90,10 +90,10 @@ oryza_crop <- function(name = "") {
 	if (file.exists(name)) {
 		return(.getNumLst(.readIniFile(name)))
 	}
-	f <- list.files(system.file("oryza/crop", package = "Roryza"), full.names = TRUE)
-	crops <- gsub(".ini", "", basename(f))
+	f <- list.files(system.file("oryza/crop", package = "Roryza"), pattern = "\\.ini$", full.names = TRUE)
+	crops <- gsub("\\.ini$", "", basename(f))
 	if (name %in% crops) {
-		ini <- .readIniFile(f[which(name == crops)])
+		ini <- .readIniFile(f[which(name == crops)[1]])
 		ini <- ini[ini[, 2] %in% .crop_pars, , drop = FALSE]
 		j <- .crop_pars %in% ini[, 2]
 		if (!all(j)) {

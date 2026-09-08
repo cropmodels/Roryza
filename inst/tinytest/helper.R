@@ -16,8 +16,8 @@ library(Roryza)
 	)
 }
 
-.oryza3_dev_exe <- function() {
-	exe <- if (.Platform$OS.type == "windows") "oryza3.exe" else "oryza3"
+.oryza2000_dev_exe <- function() {
+	exe <- if (.Platform$OS.type == "windows") "oryza2000.exe" else "oryza2000"
 	# tinytest cwd is inst/tinytest (source or installed)
 	cands <- c(
 		file.path("..", "..", "dev", "inst", exe),
@@ -29,7 +29,7 @@ library(Roryza)
 	NA_character_
 }
 
-.oryza3_templates <- function() {
+.oryza2000_templates <- function() {
 	cands <- c(
 		file.path("..", "..", "dev", "oryza2000", "templates"),
 		file.path("..", "..", "dev", "inst", "input")
