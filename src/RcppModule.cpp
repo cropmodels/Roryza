@@ -26,6 +26,7 @@ RCPP_EXPOSED_CLASS(Weather)
 RCPP_EXPOSED_CLASS(oryza_control)
 RCPP_EXPOSED_CLASS(oryza_crop)
 RCPP_EXPOSED_CLASS(oryza_soil)
+RCPP_EXPOSED_CLASS(OryzaSoilCollection)
 RCPP_EXPOSED_CLASS(OryzaOutput)
 RCPP_EXPOSED_CLASS(oryza_model)
 
@@ -197,9 +198,16 @@ RCPP_MODULE(oryza){
 		.field("values", &OryzaOutput::values)
 	;
 
+	class_<OryzaSoilCollection>("OryzaSoilCollection")
+		.constructor()
+		.method("length", &OryzaSoilCollection::size, "length")
+		.method("add", &OryzaSoilCollection::push_back, "add")
+	;
+
 	class_<oryza_model>("OryzaModel")
 		.constructor()
 		.method("run", &oryza_model::run)
+		.method("run_batch", &oryza_model::run_batch)
 		.method("setWeather", &setWeather)
 		.method("setSoil", &setSoil)
 		.field("crop", &oryza_model::crop)

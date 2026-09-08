@@ -56,7 +56,7 @@ partial simulation data may be returned}
 }
 
 \seealso{
-\code{\link{oryza}}
+\code{\link{oryza}}, \code{\link{predict}}
 }
 
 \examples{

@@ -103,3 +103,14 @@ oryza_crop <- function(name = "") {
 	}
 	.notavailable("crop")
 }
+
+
+.makeSoilCollection <- function(soils) {
+	scol <- OryzaSoilCollection$new()
+	for (i in seq_along(soils)) {
+		m <- OryzaModel$new()
+		soil(m) <- soils[[i]]
+		scol$add(m$soil)
+	}
+	scol
+}

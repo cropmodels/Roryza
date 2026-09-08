@@ -6,7 +6,8 @@ Version: 0.1-1
 Date: 2026-09-08
 LinkingTo: Rcpp
 Imports: meteor, methods (>= 0.2-2), Rcpp (>= 0.12.4)
-Suggests: tinytest
+Suggests: tinytest, terra, raster
+Depends: R (>= 3.5.0)
 URL: https://github.com/cropmodels/Roryza
 BugReports: https://github.com/cropmodels/Roryza/issues
 Authors@R: c(person("B.A.M.", "Bouman", role = "aut"),

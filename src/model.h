@@ -639,6 +639,12 @@ struct OryzaOutput {
 
 
 
+struct OryzaSoilCollection {
+	std::vector<oryza_soil> soils;
+	size_t size() const { return soils.size(); }
+	void push_back(oryza_soil s) { soils.push_back(std::move(s)); }
+};
+
 
 
 struct oryza_model {
@@ -705,7 +711,12 @@ struct oryza_model {
 
 	void run();
 
-
+	std::vector<double> run_batch(
+		std::vector<double> tmin, std::vector<double> tmax, std::vector<double> srad,
+		std::vector<double> prec, std::vector<double> vapr, std::vector<double> wind,
+		std::vector<long> date, std::vector<long> mstart, std::vector<int> soilindex,
+		OryzaSoilCollection soils, std::vector<double> depth,
+		std::vector<double> elevation, std::vector<double> latitude);
 
 	double cCO2 = 0, cKNF = 0, cNFLV = 0, cREDFT = 0;
 
