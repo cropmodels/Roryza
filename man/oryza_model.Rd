@@ -68,7 +68,7 @@ There should be no time gaps between the days in the data.frame.
 
 
 \references{
-Bouman, B. A. M., Kropff, M. J., Tuong, T. P., Wopereis, M. C. S., ten Berge, H. F. M., & van Laar, H. H. (2001). ORYZA2000 : modeling lowland rice. International Rice Research Institute / Wageningen University. https://books.irri.org/9712201716_content.pdf
+Bouman, B.A.M., Kropff, M.J., Tuong, T.P., Wopereis, M.C.S., ten Berge, H.F.M., & van Laar, H.H. (2001). ORYZA2000 : modeling lowland rice. International Rice Research Institute / Wageningen University. https://books.irri.org/9712201716_content.pdf
 }
 
 

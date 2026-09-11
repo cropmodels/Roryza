@@ -7,11 +7,10 @@ Date: 2026-09-08
 LinkingTo: Rcpp
 Imports: meteor, methods (>= 0.2-2), Rcpp (>= 0.12.4)
 Suggests: tinytest, terra, raster
-Depends: R (>= 3.5.0)
 URL: https://github.com/cropmodels/Roryza
 BugReports: https://github.com/cropmodels/Roryza/issues
-Authors@R: c(person("B.A.M.", "Bouman", role = "aut"),
-    person("M.J.", "Kropff", role = "aut"),
+Authors@R: c(person("Bas A.M.", "Bouman", role = "aut"),
+    person("Martin J.", "Kropff", role = "aut"),
     person("To Phuc", "Tuong", role = "aut"),
     person("Marco", "Wopereis", role = "aut"),
     person("H.F.M.", "ten Berge", role = "aut"),

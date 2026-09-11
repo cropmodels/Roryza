@@ -73,22 +73,23 @@ function(object, weather, mstart, soils = NULL, soiltypes = NULL,
 	terra::nlyr(rout) <- length(mstart)
 	terra::time(rout) <- mstart
 
-	use_raster <- FALSE
-	src1 <- tryCatch(unlist(terra::sources(weather[1])[1]), error = function(e) "")
-	if (length(src1) && substr(src1[1], 1, 6) == "NETCDF") {
-		if (!requireNamespace("raster", quietly = TRUE)) {
-			stop("package 'raster' is required to read NETCDF weather sources")
-		}
-		use_raster <- TRUE
-		p <- src1[1]
-		f <- unlist(strsplit(gsub("NETCDF:\"", "", p), "\""))[1]
-		weather <- lapply(needed, function(i) raster::brick(f, varname = i))
-		names(weather) <- needed
-	}
+#	use_raster <- FALSE
+#	src1 <- tryCatch(unlist(terra::sources(weather[1])[1]), error = function(e) "")
+#	if (length(src1) && substr(src1[1], 1, 6) == "NETCDF") {
+#		if (!requireNamespace("raster", quietly = TRUE)) {
+#			stop("package 'raster' is required to read NETCDF weather sources")
+#		}
+#		use_raster <- TRUE
+#		p <- src1[1]
+#		f <- unlist(strsplit(gsub("NETCDF:\"", "", p), "\""))[1]
+#		weather <- lapply(needed, function(i) raster::brick(f, varname = i))
+#		names(weather) <- needed
+#	}
 
 	nc <- ncol(rout)
 	nr <- nrow(rout)
-	if (!use_raster) terra::readStart(weather)
+	#if (!use_raster) 
+	terra::readStart(weather)
 	terra::readStart(soils)
 
 	wopt <- list(...)
@@ -99,16 +100,16 @@ function(object, weather, mstart, soils = NULL, soiltypes = NULL,
 	b <- list(row = seq_len(nr), nrows = rep(1L, nr), n = nr)
 
 	for (i in seq_len(b$n)) {
-		if (use_raster) {
-			tmin <- as.vector(t(raster::getValues(weather$tmin, b$row[i], b$nrows[i])))
-			tmax <- as.vector(t(raster::getValues(weather$tmax, b$row[i], b$nrows[i])))
-			srad <- as.vector(t(raster::getValues(weather$srad, b$row[i], b$nrows[i])))
-			if (watlim) {
-				prec <- as.vector(t(raster::getValues(weather$prec, b$row[i], b$nrows[i])))
-				vapr <- as.vector(t(raster::getValues(weather$vapr, b$row[i], b$nrows[i])))
-				wind <- as.vector(t(raster::getValues(weather$wind, b$row[i], b$nrows[i])))
-			}
-		} else {
+#		if (use_raster) {
+#			tmin <- as.vector(t(raster::getValues(weather$tmin, b$row[i], b$nrows[i])))
+#			tmax <- as.vector(t(raster::getValues(weather$tmax, b$row[i], b$nrows[i])))
+#			srad <- as.vector(t(raster::getValues(weather$srad, b$row[i], b$nrows[i])))
+#			if (watlim) {
+#				prec <- as.vector(t(raster::getValues(weather$prec, b$row[i], b$nrows[i])))
+#				vapr <- as.vector(t(raster::getValues(weather$vapr, b$row[i], b$nrows[i])))
+#				wind <- as.vector(t(raster::getValues(weather$wind, b$row[i], b$nrows[i])))
+#			}
+#		} else {
 			tmin <- as.vector(t(terra::readValues(weather$tmin, b$row[i], b$nrows[i], 1, nc, mat = TRUE)))
 			tmax <- as.vector(t(terra::readValues(weather$tmax, b$row[i], b$nrows[i], 1, nc, mat = TRUE)))
 			srad <- as.vector(t(terra::readValues(weather$srad, b$row[i], b$nrows[i], 1, nc, mat = TRUE)))
@@ -117,7 +118,7 @@ function(object, weather, mstart, soils = NULL, soiltypes = NULL,
 				vapr <- as.vector(t(terra::readValues(weather$vapr, b$row[i], b$nrows[i], 1, nc, mat = TRUE)))
 				wind <- as.vector(t(terra::readValues(weather$wind, b$row[i], b$nrows[i], 1, nc, mat = TRUE)))
 			}
-		}
+#		}
 
 		ncell_row <- length(tmin) / length(dates_i)
 		if (!watlim) {
@@ -145,9 +146,10 @@ function(object, weather, mstart, soils = NULL, soiltypes = NULL,
 			dates_i, mstart_i, sidx, scol, depth, elv, lat)
 		terra::writeValues(rout, round(y), b$row[i], b$nrows[i])
 	}
-
-	if (!use_raster) terra::readStop(weather)
+	#if (!use_raster) 
+	terra::readStop(weather)
 	terra::readStop(soils)
+
 	terra::writeStop(rout)
 }
 )

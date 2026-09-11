@@ -22,7 +22,7 @@ Make spatial predictions with an ORYZA model. First create a model object with c
   \item{soiltypes}{list of soil parameter lists (see \code{\link{oryza_soil}}).  Required for water-limited runs; optional for potential (defaults to \code{oryza_soil("potential")})}
   \item{filename}{character. Optional output filename}
   \item{overwrite}{logical. If \code{TRUE}, overwrite \code{filename}}
-  \item{...}{additional arguments passed to \code{\link[terra]{writeRaster}} \code{writeStart} via \code{wopt}}
+  \item{...}{additional arguments passed to \code{\link[terra]{writeRaster}}}
 }
 
 \value{
@@ -38,3 +38,36 @@ Weather variables and units are the same as for the point simulation:
 \code{\link{oryza_model}}, \code{\link{oryza}}
 }
 
+
+\examples{
+	f <- system.file("extdata/Philippines_IRRI.csv", package="meteor")
+	w <- read.csv(f)[,1:500]
+	w$date <- as.Date(w$date)
+	
+	r <- terra::rast(nrow=2, ncol=2, nlyr=nrow(w))
+	v <- c("srad", "tmin", "tmax", "vapr", "wind", "prec")
+	wth <- lapply(v, \(i) {
+		if (i %in% c("tmin", "tmax")) {
+			a <- c(-2, 0, 2, 4)
+		} else {
+			a <- rep(0, 4)		
+		}
+		out <- terra::setValues(r, rbind(w[,i]+a[1], w[,i]+a[2], w[,i]+a[3], w[,i]+a[4]))
+		terra::time(out) <- as.Date(w$date)
+		out
+	})
+	wth <- terra::sds(wth)
+	names(wth) <- v
+
+	crop <- oryza_crop("IR72")
+	soil <- oryza_soil("paddy")
+	control <- oryza_control()
+	control$water_limited <- FALSE
+	control$SWITIR <- 0L
+	mod <- oryza_model(crop, w, soil, control)
+
+	soils <- terra::rast(nrow=2, ncol=2, nlyr=3, names=c("latitude", "elevation", "soils"))
+	terra::values(soils) <- cbind(0, 100, 1:4) 
+
+	p <- predict(mod, wth, mstart=as.Date(c("1979-01-05", "1979-05-05")), soils=soils)
+}
