@@ -26,7 +26,7 @@ Make spatial predictions with an ORYZA model. First create a model object with c
 }
 
 \value{
-SpatRaster with one layer per element of \code{mstart}. Cell values are final grain biomass at 14% humidty (\code{WRR14}, kg ha\eqn{^{-1}}, rounded).
+SpatRaster with one layer per element of \code{mstart}. Cell values are final grain biomass at 14\% humidty (\code{WRR14}, kg ha\eqn{^{-1}}, rounded).
 }
 
 \note{
@@ -41,14 +41,14 @@ Weather variables and units are the same as for the point simulation:
 
 \examples{
 f <- system.file("extdata/Philippines_IRRI.csv", package="meteor")
-w <- read.csv(f)[1:500, ]
+w <- read.csv(f)[1:600, ]
 w$date <- as.Date(w$date)
 	
 r <- terra::rast(nrow=2, ncol=2, nlyr=nrow(w))
 v <- c("srad", "tmin", "tmax", "vapr", "wind", "prec")
 wthfun <- function(i) {
 	a <- rep(0, 4)		
-	if (i %in% c("tmin", "tmax")) {
+	if ((i == "tmin") || (i == "tmax")) {
 		a <- c(-2, 0, 2, 4)
 	}
 	out <- terra::setValues(r, rbind(w[,i]+a[1], w[,i]+a[2], w[,i]+a[3], w[,i]+a[4]))
