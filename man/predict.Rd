@@ -41,21 +41,21 @@ Weather variables and units are the same as for the point simulation:
 
 \examples{
 	f <- system.file("extdata/Philippines_IRRI.csv", package="meteor")
-	w <- read.csv(f)[,1:500]
+	w <- read.csv(f)[1:500, ]
 	w$date <- as.Date(w$date)
 	
 	r <- terra::rast(nrow=2, ncol=2, nlyr=nrow(w))
 	v <- c("srad", "tmin", "tmax", "vapr", "wind", "prec")
 	wth <- lapply(v, \(i) {
+		a <- rep(0, 4)		
 		if (i %in% c("tmin", "tmax")) {
 			a <- c(-2, 0, 2, 4)
-		} else {
-			a <- rep(0, 4)		
 		}
 		out <- terra::setValues(r, rbind(w[,i]+a[1], w[,i]+a[2], w[,i]+a[3], w[,i]+a[4]))
 		terra::time(out) <- as.Date(w$date)
-		out
+		out 
 	})
+
 	wth <- terra::sds(wth)
 	names(wth) <- v
 
@@ -70,4 +70,6 @@ Weather variables and units are the same as for the point simulation:
 	terra::values(soils) <- cbind(0, 100, 1:4) 
 
 	p <- predict(mod, wth, mstart=as.Date(c("1979-01-05", "1979-05-05")), soils=soils)
+
+
 }
