@@ -67,7 +67,8 @@ setMethod("run", signature("Rcpp_OryzaModel"),
 	"FSHTB", "FLVTB", "FSTTB", "FSOTB", "DRLVT",
 	"FCLV", "FCST", "FCSO", "FCRT", "FCSTR",
 	"GZRT", "ZRTMCW", "ZRTMCD",
-	"NFLVI", "NMAXLT",
+	"NFLVI", "FNLVI", "NMAXUP", "NMAXSO", "RFNLV", "RFNST", "TCNTRF", "FNTRT",
+	"NMAXLT", "NMINLT", "NMINSOT", "NSLLVT",
 	"LAPE", "DVSI", "WLVGI", "WSTI", "WRTI", "WSOI", "ZRTI", "ZRTTR",
 	"NH", "NPLH", "NPLSB", "NPLDS",
 	"ULLS", "LLLS", "ULDL", "LLDL", "ULLE", "LLLE", "ULRT", "LLRT", "SWIRTR"
@@ -86,6 +87,8 @@ setMethod("run", signature("Rcpp_OryzaModel"),
 			eval(parse(text = paste0("x$crop$", nm, " <- ", deparse(as.character(v)))))
 		} else if (is.matrix(v)) {
 			eval(parse(text = paste0("x$crop$", nm, " <- ", paste("c(", paste(as.vector(v), collapse = ","), ")"))))
+		} else if (length(v) > 1) {
+			eval(parse(text = paste0("x$crop$", nm, " <- ", paste("c(", paste(as.numeric(v), collapse = ","), ")"))))
 		} else {
 			eval(parse(text = paste0("x$crop$", nm, " <- ", as.numeric(v))))
 		}
@@ -134,7 +137,8 @@ setMethod("weather<-", signature("Rcpp_OryzaModel", "data.frame"),
 .req_ctr_pars <- c("modelstart", "cropstart", "max_duration", "water_limited", "latitude", "CO2")
 .opt_ctr_pars <- c("output", "ANGSTA", "ANGSTB", "FAOF", "ESTAB", "ETMOD", "SBDUR", "TMPSB", "TMCTB",
                    "RICETYPE", "elevation", "nitrogen_limited", "WATBAL", "SWITIR", "DVSIMAX",
-                   "IRRI", "SLMIN", "KPAMIN", "WCMIN", "WL0DAY", "WL0MIN", "RIRRIT", "ISTAGET")
+                   "IRRI", "SLMIN", "KPAMIN", "WCMIN", "WL0DAY", "WL0MIN", "RIRRIT", "ISTAGET",
+                   "FERTIL", "RECNIT", "SOILSP")
 
 setMethod("control<-", signature("Rcpp_OryzaModel", "list"),
 	function(x, value) {
@@ -183,6 +187,17 @@ setMethod("control<-", signature("Rcpp_OryzaModel", "list"),
 			if (is.matrix(v)) v <- as.vector(v)
 			x$control$ISTAGET <- as.numeric(v)
 		}
+		if (!is.null(value$FERTIL)) {
+			v <- value$FERTIL
+			if (is.matrix(v)) v <- as.vector(v)
+			x$control$FERTIL <- as.numeric(v)
+		}
+		if (!is.null(value$RECNIT)) {
+			v <- value$RECNIT
+			if (is.matrix(v)) v <- as.vector(v)
+			x$control$RECNIT <- as.numeric(v)
+		}
+		if (!is.null(value$SOILSP)) x$control$SOILSP <- as.numeric(value$SOILSP)
 		x
 	}
 )

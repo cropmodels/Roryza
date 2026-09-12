@@ -79,19 +79,17 @@ static void set_crop_from_list(oryza_crop &crp, List crop) {
 	crp.ZRTMCW = valueFromList<double>(crop, "ZRTMCW");
 	crp.ZRTMCD = valueFromList<double>(crop, "ZRTMCD");
 	crp.NFLVI = valueFromList<double>(crop, "NFLVI");
+	crp.FNLVI = valueFromList<double>(crop, "FNLVI");
+	crp.NMAXUP = valueFromList<double>(crop, "NMAXUP");
+	crp.NMAXSO = valueFromList<double>(crop, "NMAXSO");
+	crp.RFNLV = valueFromList<double>(crop, "RFNLV");
+	crp.RFNST = valueFromList<double>(crop, "RFNST");
+	crp.TCNTRF = valueFromList<double>(crop, "TCNTRF");
+	crp.FNTRT = valueFromList<double>(crop, "FNTRT");
 	crp.NMAXLT = TableFromList(crop, "NMAXLT");
-	crp.FNLVI = valueFromListDefault<double>(crop, "FNLVI", crp.FNLVI);
-	crp.NMAXUP = valueFromListDefault<double>(crop, "NMAXUP", crp.NMAXUP);
-	crp.NMAXSO = valueFromListDefault<double>(crop, "NMAXSO", crp.NMAXSO);
-	crp.RFNLV = valueFromListDefault<double>(crop, "RFNLV", crp.RFNLV);
-	crp.RFNST = valueFromListDefault<double>(crop, "RFNST", crp.RFNST);
-	crp.TCNTRF = valueFromListDefault<double>(crop, "TCNTRF", crp.TCNTRF);
-	crp.FNTRT = valueFromListDefault<double>(crop, "FNTRT", crp.FNTRT);
-	{
-		auto t = flatVec(crop, "NMINLT"); if (!t.empty()) crp.NMINLT = t;
-		t = flatVec(crop, "NMINSOT"); if (!t.empty()) crp.NMINSOT = t;
-		t = flatVec(crop, "NSLLVT"); if (!t.empty()) crp.NSLLVT = t;
-	}
+	crp.NMINLT = TableFromList(crop, "NMINLT");
+	crp.NMINSOT = TableFromList(crop, "NMINSOT");
+	crp.NSLLVT = TableFromList(crop, "NSLLVT");
 	crp.LAPE = valueFromList<double>(crop, "LAPE");
 	crp.DVSI = valueFromList<double>(crop, "DVSI");
 	crp.WLVGI = valueFromList<double>(crop, "WLVGI");

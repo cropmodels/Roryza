@@ -8,7 +8,8 @@
 	               "NITROENV", "WATBAL", "RUNMODE", "SCODE", "RIWCLI")
 	# 1-d layer vectors (not x-y AFGEN tables)
 	vector_pars <- c("TKL", "KST", "WCST", "VGA", "VGL", "VGN", "VGR", "PN",
-	                 "WCLI", "WCFC", "WCWP", "WCAD", "WCSTRP", "ISTAGET")
+	                 "WCLI", "WCFC", "WCWP", "WCAD", "WCSTRP", "ISTAGET",
+	                 "FERTIL", "RECNIT", "RIRRIT", "TMCTB")
 	out <- lapply(seq_along(vv), function(i) {
 		nm <- ini[i, 2]
 		if (nm %in% char_pars) {

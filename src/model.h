@@ -458,19 +458,16 @@ struct oryza_crop {
 
 	double TNSOIL = 0, NACR = 0, NSLLV = 1, RNSTRS = 1;
 
-	double NFLVI = 0.5;
-	double FNLVI = 0.025;
-	double NMAXUP = 8.;
-	double NMAXSO = 0.0175;
-	double RFNLV = 0.004;
-	double RFNST = 0.0015;
-	double TCNTRF = 10.;
-	double FNTRT = 0.15;
+	double NFLVI = 0;
+	double FNLVI = 0;
+	double NMAXUP = 0;
+	double NMAXSO = 0;
+	double RFNLV = 0;
+	double RFNST = 0;
+	double TCNTRF = 0;
+	double FNTRT = 0;
 
-	std::vector<double> NFLVTB, NMAXLT;
-	std::vector<double> NMINLT = {0.0, 0.025, 1.0, 0.012, 2.1, 0.007, 2.5, 0.007};
-	std::vector<double> NMINSOT = {0., 0.006, 50., 0.0008, 150., 0.0125, 250., 0.015, 400., 0.017, 1000., 0.017};
-	std::vector<double> NSLLVT = {0., 1.0, 1.1, 1.0, 1.5, 1.4, 2.0, 1.5, 2.5, 1.5};
+	std::vector<double> NFLVTB, NMAXLT, NMINLT, NMINSOT, NSLLVT;
 
 };
 
