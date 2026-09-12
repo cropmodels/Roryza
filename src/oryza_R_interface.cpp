@@ -8,6 +8,13 @@ using namespace Rcpp;
 #include "model.h"
 
 
+static std::vector<double> flatVec(List lst, const char *s) {
+	if (!lst.containsElementNamed(s)) return {};
+	SEXP x = lst[s];
+	return as<std::vector<double>>(x);
+}
+
+
 static void set_crop_from_list(oryza_crop &crp, List crop) {
 	crp.TBD = valueFromList<double>(crop, "TBD");
 	crp.TBLV = valueFromList<double>(crop, "TBLV");
@@ -73,6 +80,18 @@ static void set_crop_from_list(oryza_crop &crp, List crop) {
 	crp.ZRTMCD = valueFromList<double>(crop, "ZRTMCD");
 	crp.NFLVI = valueFromList<double>(crop, "NFLVI");
 	crp.NMAXLT = TableFromList(crop, "NMAXLT");
+	crp.FNLVI = valueFromListDefault<double>(crop, "FNLVI", crp.FNLVI);
+	crp.NMAXUP = valueFromListDefault<double>(crop, "NMAXUP", crp.NMAXUP);
+	crp.NMAXSO = valueFromListDefault<double>(crop, "NMAXSO", crp.NMAXSO);
+	crp.RFNLV = valueFromListDefault<double>(crop, "RFNLV", crp.RFNLV);
+	crp.RFNST = valueFromListDefault<double>(crop, "RFNST", crp.RFNST);
+	crp.TCNTRF = valueFromListDefault<double>(crop, "TCNTRF", crp.TCNTRF);
+	crp.FNTRT = valueFromListDefault<double>(crop, "FNTRT", crp.FNTRT);
+	{
+		auto t = flatVec(crop, "NMINLT"); if (!t.empty()) crp.NMINLT = t;
+		t = flatVec(crop, "NMINSOT"); if (!t.empty()) crp.NMINSOT = t;
+		t = flatVec(crop, "NSLLVT"); if (!t.empty()) crp.NSLLVT = t;
+	}
 	crp.LAPE = valueFromList<double>(crop, "LAPE");
 	crp.DVSI = valueFromList<double>(crop, "DVSI");
 	crp.WLVGI = valueFromList<double>(crop, "WLVGI");
@@ -95,13 +114,6 @@ static void set_crop_from_list(oryza_crop &crp, List crop) {
 	crp.LLRT = valueFromListDefault<double>(crop, "LLRT", crp.LLRT);
 	if (crop.containsElementNamed("SWIRTR")) crp.SWIRTR = as<std::string>(crop["SWIRTR"]);
 	crp.SWIRTRF = valueFromListDefault<double>(crop, "SWIRTRF", crp.SWIRTRF);
-}
-
-
-static std::vector<double> flatVec(List lst, const char *s) {
-	if (!lst.containsElementNamed(s)) return {};
-	SEXP x = lst[s];
-	return as<std::vector<double>>(x);
 }
 
 
@@ -176,6 +188,15 @@ static void set_control_from_list(oryza_control &cntr, List control) {
 	}
 	if (control.containsElementNamed("ISTAGET")) {
 		cntr.ISTAGET = as<std::vector<double>>(control["ISTAGET"]);
+	}
+	if (control.containsElementNamed("FERTIL")) {
+		cntr.FERTIL = as<std::vector<double>>(control["FERTIL"]);
+	}
+	if (control.containsElementNamed("RECNIT")) {
+		cntr.RECNIT = as<std::vector<double>>(control["RECNIT"]);
+	}
+	if (control.containsElementNamed("SOILSP")) {
+		cntr.SOILSP = valueFromListDefault<double>(control, "SOILSP", cntr.SOILSP);
 	}
 }
 

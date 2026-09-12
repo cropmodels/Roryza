@@ -39,12 +39,6 @@ void GPPARSET( double xCO2, double xKNF, double xNFLV, double xREDFT );
 
 
 
-void NCROP2_initialization( double DELT, double TIME, bool TERMINAL, double DVS, double LLV, double DLDR, double WLVG, double WST,
-
-                           double WSO, double GSO, double GST, double GLV, double PLTR, double LAI, double SLA, int CROPSTA, double TNSOIL,
-
-                           double &NACR, double &NFLV, double &NSLLV, double &RNSTRS);
-
 void SUBNBC( double CHKIN, double CKCFL, double TIME, double &NBCHK, bool &TERMINAL );
 
 void NNOSTRESS2_initialization( double NFLVI, std::vector<double> NMAXLT, std::vector<double> NFLVTB, double DELT, int CROPSTA, double DVS, double WLVG, double LAI, double SLA, double &NFLV, double &NSLLV, double &RNSTRS );
@@ -52,6 +46,14 @@ void NNOSTRESS2_initialization( double NFLVI, std::vector<double> NMAXLT, std::v
 void NNOSTRESS2_rate( double NFLVI, std::vector<double> NMAXLT, std::vector<double> NFLVTB, double DELT, int CROPSTA, double DVS, double WLVG, double LAI, double SLA, double &NFLV, double &NSLLV, double &RNSTRS );
 
 double NSOIL( int ITASK, int IUNITD, int IUNITL, std::string FILEIT, double OUTPUT, double DELT, double DAE, double DVS, double NACR );
+
+void nsoil_initialize(oryza_model &m);
+void nsoil_rate(oryza_model &m);
+void nsoil_state(oryza_model &m);
+
+void ncrop2_initialize(oryza_model &m);
+void ncrop2_rate(oryza_model &m);
+void ncrop2_state(oryza_model &m);
 
 std::vector<double> PHENOL( double DVS, double DVRJ, double DVRI, double DVRP, double DVRR, double HU, double DAYL, double MOPP, double PPSE, double TS, double SHCKD, int CROPSTA);
 
@@ -253,7 +255,12 @@ struct oryza_control {
 
 	std::vector<double> TMCTB = {0., 0., 366., 0.};
 
-
+	// Soil nitrogen (experiment / control). FERTIL is a compact event list:
+	// day, amount, day, amount, ... (kg N ha-1 d-1 on those DAE days; 0 elsewhere).
+	// A padded FORTRAN AFGEN table (with explicit zeros) is also accepted.
+	std::vector<double> FERTIL;
+	std::vector<double> RECNIT = {0., 0.30, 0.2, 0.35, 0.4, 0.50, 0.8, 0.75, 1.0, 0.75, 2.5, 0.75};
+	double SOILSP = 0.8;
 
 	// Irrigation management (experiment file / control)
 
@@ -451,11 +458,19 @@ struct oryza_crop {
 
 	double TNSOIL = 0, NACR = 0, NSLLV = 1, RNSTRS = 1;
 
-
-
 	double NFLVI = 0.5;
+	double FNLVI = 0.025;
+	double NMAXUP = 8.;
+	double NMAXSO = 0.0175;
+	double RFNLV = 0.004;
+	double RFNST = 0.0015;
+	double TCNTRF = 10.;
+	double FNTRT = 0.15;
 
 	std::vector<double> NFLVTB, NMAXLT;
+	std::vector<double> NMINLT = {0.0, 0.025, 1.0, 0.012, 2.1, 0.007, 2.5, 0.007};
+	std::vector<double> NMINSOT = {0., 0.006, 50., 0.0008, 150., 0.0125, 250., 0.015, 400., 0.017, 1000., 0.017};
+	std::vector<double> NSLLVT = {0., 1.0, 1.1, 1.0, 1.5, 1.4, 2.0, 1.5, 2.5, 1.5};
 
 };
 
@@ -685,7 +700,20 @@ struct oryza_model {
 
 	Weather wth;
 
+	// NSOIL SAVE state (nitrogen balance)
+	std::vector<double> FERTIL_TB; // AFGEN table (normalized from control.FERTIL)
+	double NFERTP = 0.;
+	double XFERT = 0.;
 
+	// NCROP2 SAVE state
+	double ANLV = 0., ANSO = 0., ANST = 0., ANLD = 0., ANCR = 0.;
+	double ANLVA = 0., ANSTA = 0., ANCRF = 0.;
+	double NALVS = 0., NASTS = 0., NASOS = 0., NACRS = 0., NTRTS = 0.;
+	double NALV = 0., NAST = 0., NASO = 0.;
+	double NLV = 0., NST = 0., NSO = 0., NLDLV = 0.;
+	double NLVAN = 0., NSTAN = 0., NTRT = 0.;
+	double FNLV = 0., FNST = 0., FNSO = 0.;
+	double NMAXL = 0., NMINL = 0., NMINSO = 0.;
 
 	void model_initialize();
 

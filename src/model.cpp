@@ -46,6 +46,13 @@ bool oryza_model::weather_step() {
 void oryza_model::model_output() {
 	if (control.output_option == "BATCH") {
 		output.values.push_back(crop.WSO);
+	} else if (control.NITROENV == "NITROGEN BALANCE") {
+		output.values.insert(output.values.end(), {
+			double(step), crop.DVS, crop.LAI,
+			crop.WRT, crop.WLV, crop.WST, crop.WSO, crop.WRR14,
+			crop.TRC, crop.EVSC, crop.DAE, double(crop.CROPSTA),
+			crop.TNSOIL, crop.NACR, XFERT, NFERTP
+		});
 	} else if (control.PRODENV == "WATER BALANCE") {
 		double msk1 = crop.MSKPA.empty() ? 0. : crop.MSKPA[0];
 		output.values.insert(output.values.end(), {
@@ -91,6 +98,9 @@ void oryza_model::run() {
 
 	if (control.output_option == "BATCH") {
 		output.names = {"WSO"};
+	} else if (control.nitrogen_limited) {
+		output.names = {"step", "DVS", "LAI", "WRT", "WLV", "WST", "WSO", "WRR14",
+			"TRC", "EVSC", "DAE", "CROPSTA", "TNSOIL", "NACR", "XFERT", "NFERTP"};
 	} else if (control.water_limited) {
 		output.names = {"step", "DVS", "LAI", "WRT", "WLV", "WST", "WSO", "WRR14",
 			"TRC", "TRW", "EVSC", "WL0", "IR", "MSKPA1", "DAE", "CROPSTA", "PCEW", "LESTRS"};
@@ -199,6 +209,9 @@ void oryza_model::model_initialize() {
 	if (control.NITROENV == "POTENTIAL") {
 		NNOSTRESS2_initialization(crop.NFLVI, crop.NMAXLT, crop.NFLVTB, DELT, crop.CROPSTA,
 		                          crop.DVS, crop.WLVG, crop.LAI, crop.SLA, crop.NFLV, crop.NSLLV, crop.RNSTRS);
+	} else if (control.NITROENV == "NITROGEN BALANCE") {
+		nsoil_initialize(*this);
+		ncrop2_initialize(*this);
 	}
 }
 
@@ -232,6 +245,10 @@ void oryza_model::model_rate() {
 	if (control.NITROENV == "POTENTIAL") {
 		NNOSTRESS2_rate(crop.NFLVI, crop.NMAXLT, crop.NFLVTB, DELT, crop.CROPSTA,
 		                crop.DVS, crop.WLVG, crop.LAI, crop.SLA, crop.NFLV, crop.NSLLV, crop.RNSTRS);
+	} else if (control.NITROENV == "NITROGEN BALANCE") {
+		// MODELS order: NCROP2 (uses TNSOIL → NACR) then NSOIL rate
+		ncrop2_rate(*this);
+		nsoil_rate(*this);
 	}
 
 	if (control.PRODENV == "POTENTIAL") {
@@ -257,5 +274,9 @@ void oryza_model::model_state() {
 
 	oryza_state();
 	ET2_state(DELT, crop.CROPSTA, control.ESTAB, crop.ETD, crop.EVSC, crop.TRC);
+	if (control.NITROENV == "NITROGEN BALANCE") {
+		ncrop2_state(*this);
+		nsoil_state(*this);
+	}
 	update_cropsta();
 }

@@ -66,6 +66,9 @@ RCPP_MODULE(oryza){
 		.field("WL0MIN", &oryza_control::WL0MIN)
 		.field("RIRRIT", &oryza_control::RIRRIT)
 		.field("ISTAGET", &oryza_control::ISTAGET)
+		.field("FERTIL", &oryza_control::FERTIL)
+		.field("RECNIT", &oryza_control::RECNIT)
+		.field("SOILSP", &oryza_control::SOILSP)
 	;
 
 	class_<Weather>("Weather")
@@ -144,6 +147,16 @@ RCPP_MODULE(oryza){
 		.field("ZRTMCD", &oryza_crop::ZRTMCD)
 		.field("NFLVI", &oryza_crop::NFLVI)
 		.field("NMAXLT", &oryza_crop::NMAXLT)
+		.field("FNLVI", &oryza_crop::FNLVI)
+		.field("NMAXUP", &oryza_crop::NMAXUP)
+		.field("NMAXSO", &oryza_crop::NMAXSO)
+		.field("RFNLV", &oryza_crop::RFNLV)
+		.field("RFNST", &oryza_crop::RFNST)
+		.field("TCNTRF", &oryza_crop::TCNTRF)
+		.field("FNTRT", &oryza_crop::FNTRT)
+		.field("NMINLT", &oryza_crop::NMINLT)
+		.field("NMINSOT", &oryza_crop::NMINSOT)
+		.field("NSLLVT", &oryza_crop::NSLLVT)
 		.field("LAPE", &oryza_crop::LAPE)
 		.field("DVSI", &oryza_crop::DVSI)
 		.field("WLVGI", &oryza_crop::WLVGI)
@@ -166,6 +179,13 @@ RCPP_MODULE(oryza){
 		.field("LLRT", &oryza_crop::LLRT)
 		.field("SWIRTR", &oryza_crop::SWIRTR)
 		.field("SWIRTRF", &oryza_crop::SWIRTRF)
+		.field("TNSOIL", &oryza_crop::TNSOIL)
+		.field("NACR", &oryza_crop::NACR)
+		.field("NFLV", &oryza_crop::NFLV)
+		.field("NSLLV", &oryza_crop::NSLLV)
+		.field("RNSTRS", &oryza_crop::RNSTRS)
+		.field("DAE", &oryza_crop::DAE)
+		.field("DVS", &oryza_crop::DVS)
 	;
 
 	class_<oryza_soil>("OryzaSoil")
@@ -217,5 +237,7 @@ RCPP_MODULE(oryza){
 		.field("output", &oryza_model::output)
 		.field("messages", &oryza_model::messages)
 		.field("fatalError", &oryza_model::fatalError)
+		.field("XFERT", &oryza_model::XFERT)
+		.field("NFERTP", &oryza_model::NFERTP)
 	;
 }

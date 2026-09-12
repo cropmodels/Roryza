@@ -17,8 +17,11 @@ double LIMIT(double min, double max, double v) {
 }
 
 double AFGEN(std::vector<double> xy, double x) {
-    int n = xy.size();
-    double y = -1;
+    int n = static_cast<int>(xy.size());
+    if (n < 2) {
+        return 0.;
+    }
+    double y = xy[1];
     if (x < xy[0]) {
         y = xy[1];
     } else if (x > xy[n-2]) {
