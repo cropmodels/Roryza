@@ -9,9 +9,9 @@ if (!isGeneric("weather<-")) { setGeneric("weather<-", function(x, value) standa
 
 oryza <- function(crop, weather, soil, control) {
 	control$modelstart <- as.integer(as.Date(control$modelstart))
-	if (!is.null(control$TMCTB) && is.matrix(control$TMCTB)) {
-		control$TMCTB <- as.vector(control$TMCTB)
-	}
+	#if (!is.null(control$TMCTB) && is.matrix(control$TMCTB)) {
+	#	control$TMCTB <- as.vector(control$TMCTB)
+	#}
 	d <- .oryza(crop, weather, soil, control)
 	date <- as.Date(control$modelstart, origin = "1970-01-01") + (d[, "step"] - 1)
 	data.frame(date = date, d)
@@ -134,9 +134,9 @@ setMethod("weather<-", signature("Rcpp_OryzaModel", "data.frame"),
 )
 
 
-.req_ctr_pars <- c("modelstart", "cropstart", "max_duration", "water_limited", "latitude", "CO2")
-.opt_ctr_pars <- c("output", "ANGSTA", "ANGSTB", "FAOF", "ESTAB", "ETMOD", "SBDUR", "TMPSB", "TMCTB",
-                   "RICETYPE", "elevation", "nitrogen_limited", "WATBAL", "SWITIR", "DVSIMAX",
+.req_ctr_pars <- c("modelstart", "cropstart", "max_duration", "water_limited", "latitude", "elevation", "CO2")
+.opt_ctr_pars <- c("output", "ANGSTA", "ANGSTB", "FAOF", "ESTAB", "ETMOD", "SBDUR", "TMPSB", 
+                   "nitrogen_limited", "WATBAL", "SWITIR", "DVSIMAX",
                    "IRRI", "SLMIN", "KPAMIN", "WCMIN", "WL0DAY", "WL0MIN", "RIRRIT", "ISTAGET",
                    "FERTIL", "RECNIT", "SOILSP")
 

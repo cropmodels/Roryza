@@ -161,7 +161,7 @@ static void set_control_from_list(oryza_control &cntr, List control) {
 	cntr.max_duration = valueFromListDefault<int>(control, "max_duration", 365);
 	cntr.ESTAB = valueFromListDefault<std::string>(control, "ESTAB", "DIRECT-SEED");
 	cntr.ETMOD = valueFromListDefault<std::string>(control, "ETMOD", "PENMAN");
-	cntr.RICETYPE = valueFromListDefault<std::string>(control, "RICETYPE", "LOWLAND");
+	//cntr.RICETYPE = valueFromListDefault<std::string>(control, "RICETYPE", "LOWLAND");
 	cntr.SBDUR = valueFromListDefault<int>(control, "SBDUR", 0);
 	cntr.TMPSB = valueFromListDefault<double>(control, "TMPSB", 0);
 	cntr.WATBAL = valueFromListDefault<std::string>(control, "WATBAL", "PADDY");
@@ -173,14 +173,14 @@ static void set_control_from_list(oryza_control &cntr, List control) {
 	cntr.WCMIN = valueFromListDefault<double>(control, "WCMIN", 0.30);
 	cntr.WL0DAY = valueFromListDefault<int>(control, "WL0DAY", 5);
 	cntr.WL0MIN = valueFromListDefault<double>(control, "WL0MIN", 10.);
-	if (control.containsElementNamed("TMCTB")) {
-		SEXP tm = control["TMCTB"];
-		if (Rf_isMatrix(tm)) {
-			cntr.TMCTB = TableFromList(control, "TMCTB");
-		} else {
-			cntr.TMCTB = as<std::vector<double>>(tm);
-		}
-	}
+	//if (control.containsElementNamed("TMCTB")) {
+	//	SEXP tm = control["TMCTB"];
+	//	if (Rf_isMatrix(tm)) {
+	//		cntr.TMCTB = TableFromList(control, "TMCTB");
+	//	} else {
+	//		cntr.TMCTB = as<std::vector<double>>(tm);
+	//	}
+	//}
 	if (control.containsElementNamed("RIRRIT")) {
 		cntr.RIRRIT = as<std::vector<double>>(control["RIRRIT"]);
 	}

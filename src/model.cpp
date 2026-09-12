@@ -174,7 +174,7 @@ void oryza_model::model_initialize() {
 	crop.CO2 = control.CO2;
 	crop.TMPSB = control.TMPSB;
 	crop.SBDUR = control.SBDUR;
-	crop.TMCTB = control.TMCTB;
+	//crop.TMCTB = control.TMCTB;
 	atm.latitude = control.latitude;
 
 	if (control.ESTAB == "DIRECT-SEED") {

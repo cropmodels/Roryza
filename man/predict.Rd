@@ -18,7 +18,7 @@ Make spatial predictions with an ORYZA model. First create a model object with c
   \item{object}{ORYZA model (\code{Rcpp_OryzaModel})}
   \item{weather}{SpatRasterDataset with daily weather. Required sub-datasets:  \code{tmin}, \code{tmax}, \code{srad}. For water-limited runs also \code{prec}, \code{vapr}, and \code{wind}. All must share the same number of  layers; \code{tmin} must have Date time stamps}
   \item{mstart}{Date. Simulation start dates (one output layer per date)}
-  \item{soils}{SpatRaster. Must include layers \code{latitude} and \code{elevation}. For water-limited runs also \code{soil} (1-based index into \code{soiltypes}) and \code{soildepth} (maximum rootable depth in m; used as \code{ZRTMS})}
+  \item{soils}{SpatRaster. Must include layer \code{elevation}. For water-limited runs also \code{soil} (1-based index into \code{soiltypes}) and \code{soildepth} (maximum rootable depth in m; used as \code{ZRTMS})}
   \item{soiltypes}{list of soil parameter lists (see \code{\link{oryza_soil}}).  Required for water-limited runs; optional for potential (defaults to \code{oryza_soil("potential")})}
   \item{filename}{character. Optional output filename}
   \item{overwrite}{logical. If \code{TRUE}, overwrite \code{filename}}
@@ -66,8 +66,7 @@ control$water_limited <- FALSE
 control$SWITIR <- 0L
 mod <- oryza_model(crop, w, soil, control)
 
-soils <- terra::rast(nrow=2, ncol=2, nlyr=3, names=c("latitude", "elevation", "soils"))
-terra::values(soils) <- cbind(0, 100, 1:4) 
+soils <- terra::rast(nrow=2, ncol=2, names="elevation", vals=100)
 
 p <- predict(mod, wth, mstart=as.Date(c("1979-01-05", "1979-05-05")), soils=soils)
 

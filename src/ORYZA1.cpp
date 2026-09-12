@@ -159,13 +159,13 @@ void oryza_model::oryza_rate() {
             crop.TMPCOV = 0.;
         }
 
-        if (crop.TMCTB.size() >= 2) {
-            crop.TCOR = AFGEN(crop.TMCTB, DOY);
-        } else {
-            crop.TCOR = 0.;
-        }
-        crop.TMAX = atm.TMMX + crop.TCOR + crop.TMPCOV;
-        crop.TMIN = atm.TMMN + crop.TCOR;
+//        if (crop.TMCTB.size() >= 2) {
+//            crop.TCOR = AFGEN(crop.TMCTB, DOY);
+//        } else {
+//            crop.TCOR = 0.;
+//        }
+        crop.TMAX = atm.TMMX + crop.TMPCOV //  + crop.TCOR;
+        crop.TMIN = atm.TMMN // + crop.TCOR;
         crop.TAV = (crop.TMIN + crop.TMAX) / 2.;
         crop.TAVD = (crop.TMAX + crop.TAV) / 2.;
         crop.DTR = crop.RDD;

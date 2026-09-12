@@ -1,4 +1,26 @@
 
+get_latitude <- function(x, startrow, nrows) {
+	# Cell latitudes for a raster block (same cell order as terra::readValues).
+	# Lon/lat rasters: y coordinates are latitude.
+	# Projected rasters: cell centers are transformed to EPSG:4326.
+	nc <- terra::ncol(x)
+	rows <- startrow + seq_len(nrows) - 1L
+	if (isTRUE(terra::is.lonlat(x, perhaps = TRUE, warn = FALSE))) {
+		return(as.vector(rep(terra::yFromRow(x, rows), each = nc)))
+	}
+	cr <- terra::crs(x)
+	if (is.null(cr) || !nzchar(cr)) {
+		stop("cannot compute latitude: raster is not lon/lat and has no CRS")
+	}
+	cells <- terra::cellFromRowCol(x,
+		rep(rows, each = nc),
+		rep(seq_len(nc), times = nrows))
+	xy <- terra::xyFromCell(x, cells)
+	ll <- terra::project(xy, from = cr, to = "EPSG:4326")
+	as.vector(ll[, 2])
+}
+
+
 setMethod("predict", signature("Rcpp_OryzaModel"),
 function(object, weather, mstart, soils = NULL, soiltypes = NULL,
          filename = "", overwrite = FALSE, ...) {
@@ -14,8 +36,8 @@ function(object, weather, mstart, soils = NULL, soiltypes = NULL,
 
 	watlim <- isTRUE(object$control$water_limited)
 
-	# latitude / elevation are always needed for radiation and ET
-	need_soil_layers <- c("latitude", "elevation")
+	# elevation always needed; latitude is derived from the raster geometry/CRS
+	need_soil_layers <- "elevation"
 	if (watlim) {
 		need_soil_layers <- c("soil", "soildepth", need_soil_layers)
 		needed <- c("tmin", "tmax", "srad", "prec", "vapr", "wind")
@@ -33,7 +55,7 @@ function(object, weather, mstart, soils = NULL, soiltypes = NULL,
 	} else {
 		needed <- c("tmin", "tmax", "srad")
 		if (is.null(soils)) {
-			stop("predict requires a 'soils' SpatRaster with latitude and elevation layers")
+			stop("predict requires a 'soils' SpatRaster with an elevation layer")
 		}
 		stopifnot(inherits(soils, "SpatRaster"))
 		miss <- setdiff(need_soil_layers, names(soils))
@@ -129,7 +151,7 @@ function(object, weather, mstart, soils = NULL, soiltypes = NULL,
 		}
 
 		elv <- as.vector(terra::readValues(soils$elevation, b$row[i], b$nrows[i], 1, nc))
-		lat <- as.vector(terra::readValues(soils$latitude, b$row[i], b$nrows[i], 1, nc))
+		lat <- get_latitude(soils, b$row[i], b$nrows[i])
 
 		if (watlim) {
 			sidx <- as.vector(terra::readValues(soils$soil, b$row[i], b$nrows[i], 1, nc))
